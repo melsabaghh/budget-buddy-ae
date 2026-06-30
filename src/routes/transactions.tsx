@@ -265,6 +265,3 @@ function Mini({
     </div>
   );
 }
-
-let _unused: typeof CATEGORY_LABEL | undefined;
-void _unused;
