@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/table";
 import {
   AED,
-  CATEGORY_LABEL,
   CATEGORY_TYPES,
   currentMonth,
   isIncome,
