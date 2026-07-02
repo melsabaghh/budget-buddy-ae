@@ -92,21 +92,31 @@ function SavingsPage() {
     );
   };
 
+  const grandTotal = goals.reduce((s, g) => s + g.saved, 0);
+  const grandTarget = goals.reduce((s, g) => s + g.targetAmount, 0);
+  const grandMonthly = goals.reduce((s, g) => s + g.monthlyContribution, 0);
+  const grandPct =
+    grandTarget > 0 ? Math.min(100, (grandTotal / grandTarget) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Savings plan</h1>
-          <p className="text-sm text-muted-foreground">
-            Set goals, log contributions, watch progress.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={startNew}>
-              <Plus className="mr-2 h-4 w-4" /> New goal
-            </Button>
-          </DialogTrigger>
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-lg shadow-primary/5 backdrop-blur-xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full gradient-brand opacity-15 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight">
+              Savings <span className="gradient-text">plan</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Set goals, log contributions and watch progress compound.
+            </p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={startNew} className="gradient-brand text-white shadow-md shadow-primary/25 hover:opacity-95">
+                <Plus className="mr-2 h-4 w-4" /> New goal
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -182,17 +192,44 @@ function SavingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
+
+        {goals.length > 0 && (
+          <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total saved</div>
+              <div className="mt-1 font-display text-lg font-semibold text-income">{AED(grandTotal)}</div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full gradient-brand" style={{ width: `${grandPct}%` }} />
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground">{grandPct.toFixed(0)}% of {AED(grandTarget)}</div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Monthly commitment</div>
+              <div className="mt-1 font-display text-lg font-semibold">{AED(grandMonthly)}</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">Across {goals.length} goal{goals.length === 1 ? "" : "s"}</div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Remaining</div>
+              <div className="mt-1 font-display text-lg font-semibold text-expense">{AED(Math.max(0, grandTarget - grandTotal))}</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">
+                {grandMonthly > 0 ? `~${Math.ceil(Math.max(0, grandTarget - grandTotal) / grandMonthly)} months at current rate` : "Set a monthly amount to project"}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {goals.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <Card className="glass-card">
+          <CardContent className="py-16 text-center text-sm text-muted-foreground">
             <PiggyBank className="mx-auto mb-3 h-8 w-8 text-muted-foreground/60" />
             No savings goals yet. Click <span className="font-medium">New goal</span> to start.
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
+
           {goals.map((g) => {
             const pct = g.targetAmount > 0
               ? Math.min(100, (g.saved / g.targetAmount) * 100)
@@ -202,7 +239,7 @@ function SavingsPage() {
               ? Math.ceil(remaining / g.monthlyContribution)
               : null;
             return (
-              <Card key={g.id}>
+              <Card key={g.id} className="glass-card">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center justify-between text-base">
                     <span>{g.name}</span>

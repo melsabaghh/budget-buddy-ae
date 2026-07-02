@@ -99,19 +99,23 @@ function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Categories</h1>
-          <p className="text-sm text-muted-foreground">
-            Each category appears in monthly transactions from start to end date.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={startNew}>
-              <Plus className="mr-2 h-4 w-4" /> Add category
-            </Button>
-          </DialogTrigger>
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-lg shadow-primary/5 backdrop-blur-xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full gradient-brand opacity-15 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight">
+              Category <span className="gradient-text">library</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Each category appears in monthly transactions from its start month until the end date.
+            </p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={startNew} className="gradient-brand text-white shadow-md shadow-primary/25 hover:opacity-95">
+                <Plus className="mr-2 h-4 w-4" /> Add category
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -195,14 +199,17 @@ function CategoriesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+
 
       {CATEGORY_TYPES.map((t) => {
         const items = categories.filter((c) => c.type === t.value);
         return (
-          <Card key={t.value}>
+          <Card key={t.value} className="glass-card">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 font-display text-base">
                 {t.label}
                 <Badge variant="secondary" className="font-normal">
                   {items.length}

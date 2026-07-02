@@ -95,49 +95,59 @@ function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
-          <p className="text-sm text-muted-foreground">
-            Planned vs actual amounts for each category.
-          </p>
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-lg shadow-primary/5 backdrop-blur-xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full gradient-brand opacity-15 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+              {monthLabel(month)}
+            </div>
+            <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight">
+              Monthly <span className="gradient-text">ledger</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Enter planned and actual amounts. Rows appear from each category's start until its end month.
+            </p>
+          </div>
+          <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/70 p-1 shadow-sm">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setMonth(shiftMonth(month, -1))}
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Input
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value || currentMonth())}
+              className="h-8 w-[150px] border-0 bg-transparent text-sm focus-visible:ring-0"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setMonth(shiftMonth(month, 1))}
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border bg-card p-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setMonth(shiftMonth(month, -1))}
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value || currentMonth())}
-            className="w-[160px] border-0 bg-transparent text-sm focus-visible:ring-0"
-          />
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setMonth(shiftMonth(month, 1))}
-            aria-label="Next month"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Mini label="Planned income" value={totals.pIn} tone="income" />
-        <Mini label="Actual income" value={totals.aIn} tone="income" />
-        <Mini label="Planned out" value={totals.pOut} tone="expense" />
-        <Mini label="Actual out" value={totals.aOut} tone="expense" />
+        <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Mini label="Planned income" value={totals.pIn} tone="income" />
+          <Mini label="Actual income" value={totals.aIn} tone="income" />
+          <Mini label="Planned out" value={totals.pOut} tone="expense" />
+          <Mini label="Actual out" value={totals.aOut} tone="expense" />
+        </div>
       </div>
 
       {active.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <Card className="glass-card">
+          <CardContent className="py-16 text-center text-sm text-muted-foreground">
             No active categories for {monthLabel(month)}. Add categories first.
           </CardContent>
         </Card>
@@ -147,9 +157,9 @@ function TransactionsPage() {
             const items = grouped.get(t.value) ?? [];
             if (items.length === 0) return null;
             return (
-              <Card key={t.value}>
+              <Card key={t.value} className="glass-card">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
+                  <CardTitle className="flex items-center gap-2 font-display text-base">
                     {t.label}
                     <Badge variant="secondary" className="font-normal">
                       {items.length}
@@ -252,11 +262,13 @@ function Mini({
   tone: "income" | "expense";
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+    <div className="rounded-2xl border border-border/60 bg-background/60 p-4 backdrop-blur">
+      <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <div
         className={
-          "mt-1 text-lg font-semibold " +
+          "mt-1 font-display text-lg font-semibold " +
           (tone === "income" ? "text-income" : "text-expense")
         }
       >
