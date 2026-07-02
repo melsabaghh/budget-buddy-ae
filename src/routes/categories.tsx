@@ -199,14 +199,17 @@ function CategoriesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+
 
       {CATEGORY_TYPES.map((t) => {
         const items = categories.filter((c) => c.type === t.value);
         return (
-          <Card key={t.value}>
+          <Card key={t.value} className="glass-card">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 font-display text-base">
                 {t.label}
                 <Badge variant="secondary" className="font-normal">
                   {items.length}

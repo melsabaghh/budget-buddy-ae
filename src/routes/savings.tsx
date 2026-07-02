@@ -92,21 +92,31 @@ function SavingsPage() {
     );
   };
 
+  const grandTotal = goals.reduce((s, g) => s + g.saved, 0);
+  const grandTarget = goals.reduce((s, g) => s + g.targetAmount, 0);
+  const grandMonthly = goals.reduce((s, g) => s + g.monthlyContribution, 0);
+  const grandPct =
+    grandTarget > 0 ? Math.min(100, (grandTotal / grandTarget) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Savings plan</h1>
-          <p className="text-sm text-muted-foreground">
-            Set goals, log contributions, watch progress.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={startNew}>
-              <Plus className="mr-2 h-4 w-4" /> New goal
-            </Button>
-          </DialogTrigger>
+      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-lg shadow-primary/5 backdrop-blur-xl">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full gradient-brand opacity-15 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight">
+              Savings <span className="gradient-text">plan</span>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Set goals, log contributions and watch progress compound.
+            </p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={startNew} className="gradient-brand text-white shadow-md shadow-primary/25 hover:opacity-95">
+                <Plus className="mr-2 h-4 w-4" /> New goal
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
