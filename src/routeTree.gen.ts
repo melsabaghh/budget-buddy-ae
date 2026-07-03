@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as SavingsRouteImport } from './routes/savings'
+import { Route as DebtsRouteImport } from './routes/debts'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const TransactionsRoute = TransactionsRouteImport.update({
 const SavingsRoute = SavingsRouteImport.update({
   id: '/savings',
   path: '/savings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebtsRoute = DebtsRouteImport.update({
+  id: '/debts',
+  path: '/debts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CategoriesRoute = CategoriesRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/debts': typeof DebtsRoute
   '/savings': typeof SavingsRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/debts': typeof DebtsRoute
   '/savings': typeof SavingsRoute
   '/transactions': typeof TransactionsRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/categories': typeof CategoriesRoute
+  '/debts': typeof DebtsRoute
   '/savings': typeof SavingsRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/categories' | '/savings' | '/transactions'
+  fullPaths: '/' | '/categories' | '/debts' | '/savings' | '/transactions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/categories' | '/savings' | '/transactions'
-  id: '__root__' | '/' | '/categories' | '/savings' | '/transactions'
+  to: '/' | '/categories' | '/debts' | '/savings' | '/transactions'
+  id: '__root__' | '/' | '/categories' | '/debts' | '/savings' | '/transactions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CategoriesRoute: typeof CategoriesRoute
+  DebtsRoute: typeof DebtsRoute
   SavingsRoute: typeof SavingsRoute
   TransactionsRoute: typeof TransactionsRoute
 }
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/savings'
       fullPath: '/savings'
       preLoaderRoute: typeof SavingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debts': {
+      id: '/debts'
+      path: '/debts'
+      fullPath: '/debts'
+      preLoaderRoute: typeof DebtsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/categories': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CategoriesRoute: CategoriesRoute,
+  DebtsRoute: DebtsRoute,
   SavingsRoute: SavingsRoute,
   TransactionsRoute: TransactionsRoute,
 }
