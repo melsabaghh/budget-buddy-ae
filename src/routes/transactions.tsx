@@ -31,7 +31,7 @@ import {
   useTransactions,
   type CategoryType,
 } from "@/lib/budget-store";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
