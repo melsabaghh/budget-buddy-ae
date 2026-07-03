@@ -328,5 +328,3 @@ function Mini({
   );
 }
 
-// Silence unused-import warnings when Table components aren't rendered.
-export const _tableRefs = { Table, TableBody, TableCell, TableHead, TableHeader, TableRow };
