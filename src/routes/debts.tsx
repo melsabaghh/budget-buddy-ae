@@ -18,6 +18,7 @@ import {
   type Category,
   type TransactionEntry,
 } from "@/lib/budget-store";
+import { cn } from "@/lib/utils";
 import { Banknote, CreditCard, CalendarClock, TrendingDown } from "lucide-react";
 
 export const Route = createFileRoute("/debts")({
