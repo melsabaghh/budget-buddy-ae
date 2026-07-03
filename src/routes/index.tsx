@@ -684,10 +684,12 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="font-display text-base">
-                Active items this month
+                {scope === "year" ? `Active items in ${year}` : "Active items this month"}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Everything scheduled for {monthLabel(month)}.
+                {scope === "year"
+                  ? `Everything scheduled at any point during ${year}.`
+                  : `Everything scheduled for ${monthLabel(month)}.`}
               </p>
             </div>
             <Link
