@@ -1,12 +1,13 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Wallet, LayoutDashboard, ListChecks, Tags, PiggyBank } from "lucide-react";
+import { Wallet, LayoutDashboard, ListChecks, Tags, PiggyBank, CreditCard } from "lucide-react";
 import { currentMonth, monthLabel } from "@/lib/budget-store";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ListChecks },
   { to: "/categories", label: "Categories", icon: Tags },
+  { to: "/debts", label: "Debts", icon: CreditCard },
   { to: "/savings", label: "Savings", icon: PiggyBank },
 ] as const;
 
