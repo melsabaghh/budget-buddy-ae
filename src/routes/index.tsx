@@ -282,28 +282,58 @@ function Dashboard() {
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
-              {monthLabel(month)}
+              {scope === "year" ? `Full year ${year}` : monthLabel(month)}
             </div>
             <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Your money at a <span className="gradient-text">glance</span>
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Real-time overview of income, spending and savings — all in AED.
+              {scope === "year"
+                ? `Year-to-date analysis across all 12 months of ${year} — in AED.`
+                : "Real-time overview of income, spending and savings — all in AED."}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1 rounded-2xl border border-border/60 bg-background/70 px-5 py-3">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Net this month
-            </span>
-            <span
-              className={
-                "font-display text-2xl font-semibold " +
-                (summary.actualNet >= 0 ? "text-income" : "text-expense")
-              }
-            >
-              {summary.actualNet >= 0 ? "+" : ""}
-              {AED(summary.actualNet)}
-            </span>
+          <div className="flex flex-col items-end gap-3">
+            <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setScope("month")}
+                className={
+                  "rounded-full px-3.5 py-1.5 text-xs font-medium transition " +
+                  (scope === "month"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                This month
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope("year")}
+                className={
+                  "rounded-full px-3.5 py-1.5 text-xs font-medium transition " +
+                  (scope === "year"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                Full year
+              </button>
+            </div>
+            <div className="flex flex-col items-end gap-1 rounded-2xl border border-border/60 bg-background/70 px-5 py-3">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {scope === "year" ? `Net ${year}` : "Net this month"}
+              </span>
+              <span
+                className={
+                  "font-display text-2xl font-semibold " +
+                  (summary.actualNet >= 0 ? "text-income" : "text-expense")
+                }
+              >
+                {summary.actualNet >= 0 ? "+" : ""}
+                {AED(summary.actualNet)}
+              </span>
+            </div>
           </div>
         </div>
 
