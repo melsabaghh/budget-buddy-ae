@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -122,18 +122,79 @@ function computeMonth(
   };
 }
 
+type Scope = "month" | "year";
+
 function Dashboard() {
   const [categories] = useCategories();
   const [txs] = useTransactions();
   const [savings] = useSavings();
   const month = currentMonth();
+  const [scope, setScope] = useState<Scope>("month");
+  const year = month.slice(0, 4);
 
-  const summary = useMemo(
+  const yearMonths = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const mm = String(i + 1).padStart(2, "0");
+      return `${year}-${mm}`;
+    });
+  }, [year]);
+
+  const monthSummary = useMemo(
     () => computeMonth(categories, txs, month),
     [categories, txs, month],
   );
 
+  const yearSummaries = useMemo(
+    () => yearMonths.map((m) => ({ m, s: computeMonth(categories, txs, m) })),
+    [categories, txs, yearMonths],
+  );
+
+  const yearSummary = useMemo(() => {
+    const byType: Record<CategoryType, { planned: number; actual: number }> = {
+      income: { planned: 0, actual: 0 },
+      bill: { planned: 0, actual: 0 },
+      utility: { planned: 0, actual: 0 },
+      expense: { planned: 0, actual: 0 },
+      installment: { planned: 0, actual: 0 },
+      loan: { planned: 0, actual: 0 },
+    };
+    let pIn = 0, aIn = 0, pOut = 0, aOut = 0;
+    const activeMap = new Map<string, Category>();
+    for (const { s } of yearSummaries) {
+      pIn += s.plannedIncome;
+      aIn += s.actualIncome;
+      pOut += s.plannedOut;
+      aOut += s.actualOut;
+      for (const k of Object.keys(s.byType) as CategoryType[]) {
+        byType[k].planned += s.byType[k].planned;
+        byType[k].actual += s.byType[k].actual;
+      }
+      for (const c of s.active) activeMap.set(c.id, c);
+    }
+    return {
+      plannedIncome: pIn,
+      actualIncome: aIn,
+      plannedOut: pOut,
+      actualOut: aOut,
+      plannedNet: pIn - pOut,
+      actualNet: aIn - aOut,
+      active: Array.from(activeMap.values()),
+      byType,
+    };
+  }, [yearSummaries]);
+
+  const summary = scope === "year" ? yearSummary : monthSummary;
+
   const trend = useMemo(() => {
+    if (scope === "year") {
+      return yearSummaries.map(({ m, s }) => ({
+        month: m,
+        label: new Date(`${m}-01`).toLocaleString("en-US", { month: "short" }),
+        income: s.actualIncome,
+        spending: s.actualOut,
+        net: s.actualNet,
+      }));
+    }
     const arr: {
       month: string;
       label: string;
@@ -153,7 +214,7 @@ function Dashboard() {
       });
     }
     return arr;
-  }, [categories, txs, month]);
+  }, [scope, yearSummaries, categories, txs, month]);
 
   const spendingByType = useMemo(() => {
     return (Object.keys(summary.byType) as CategoryType[])
@@ -176,19 +237,29 @@ function Dashboard() {
   }, [summary.byType]);
 
   const topOverspend = useMemo(() => {
-    return summary.active
+    const rows = summary.active
       .filter((c) => !isIncome(c.type))
       .map((c) => {
-        const e = txs.find(
-          (t) => t.month === month && t.categoryId === c.id,
-        );
-        const planned = e?.planned ?? c.amount;
-        const actual = e?.actual ?? 0;
+        let planned = 0;
+        let actual = 0;
+        if (scope === "year") {
+          for (const m of yearMonths) {
+            if (!monthInRange(m, c.startDate, c.endDate)) continue;
+            const e = txs.find((t) => t.month === m && t.categoryId === c.id);
+            planned += e?.planned ?? c.amount;
+            actual += e?.actual ?? 0;
+          }
+        } else {
+          const e = txs.find(
+            (t) => t.month === month && t.categoryId === c.id,
+          );
+          planned = e?.planned ?? c.amount;
+          actual = e?.actual ?? 0;
+        }
         return { c, planned, actual, over: actual - planned };
-      })
-      .sort((a, b) => b.over - a.over)
-      .slice(0, 5);
-  }, [summary.active, txs, month]);
+      });
+    return rows.sort((a, b) => b.over - a.over).slice(0, 5);
+  }, [summary.active, txs, month, scope, yearMonths]);
 
   const savingsRate =
     summary.actualIncome > 0
@@ -211,28 +282,58 @@ function Dashboard() {
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
-              {monthLabel(month)}
+              {scope === "year" ? `Full year ${year}` : monthLabel(month)}
             </div>
             <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Your money at a <span className="gradient-text">glance</span>
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Real-time overview of income, spending and savings — all in AED.
+              {scope === "year"
+                ? `Year-to-date analysis across all 12 months of ${year} — in AED.`
+                : "Real-time overview of income, spending and savings — all in AED."}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1 rounded-2xl border border-border/60 bg-background/70 px-5 py-3">
-            <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Net this month
-            </span>
-            <span
-              className={
-                "font-display text-2xl font-semibold " +
-                (summary.actualNet >= 0 ? "text-income" : "text-expense")
-              }
-            >
-              {summary.actualNet >= 0 ? "+" : ""}
-              {AED(summary.actualNet)}
-            </span>
+          <div className="flex flex-col items-end gap-3">
+            <div className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setScope("month")}
+                className={
+                  "rounded-full px-3.5 py-1.5 text-xs font-medium transition " +
+                  (scope === "month"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                This month
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope("year")}
+                className={
+                  "rounded-full px-3.5 py-1.5 text-xs font-medium transition " +
+                  (scope === "year"
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground")
+                }
+              >
+                Full year
+              </button>
+            </div>
+            <div className="flex flex-col items-end gap-1 rounded-2xl border border-border/60 bg-background/70 px-5 py-3">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {scope === "year" ? `Net ${year}` : "Net this month"}
+              </span>
+              <span
+                className={
+                  "font-display text-2xl font-semibold " +
+                  (summary.actualNet >= 0 ? "text-income" : "text-expense")
+                }
+              >
+                {summary.actualNet >= 0 ? "+" : ""}
+                {AED(summary.actualNet)}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -276,10 +377,12 @@ function Dashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="font-display text-base">
-                  6-month cashflow
+                  {scope === "year" ? `${year} cashflow` : "6-month cashflow"}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Actual income, spending and net across recent months.
+                  {scope === "year"
+                    ? "Actual income, spending and net across every month of the year."
+                    : "Actual income, spending and net across recent months."}
                 </p>
               </div>
               <Badge variant="secondary" className="font-normal">
@@ -356,7 +459,9 @@ function Dashboard() {
               Spending breakdown
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Where your money went this month.
+              {scope === "year"
+                ? `Where your money went across ${year}.`
+                : "Where your money went this month."}
             </p>
           </CardHeader>
           <CardContent>
@@ -579,10 +684,12 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="font-display text-base">
-                Active items this month
+                {scope === "year" ? `Active items in ${year}` : "Active items this month"}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Everything scheduled for {monthLabel(month)}.
+                {scope === "year"
+                  ? `Everything scheduled at any point during ${year}.`
+                  : `Everything scheduled for ${monthLabel(month)}.`}
               </p>
             </div>
             <Link
@@ -637,12 +744,24 @@ function Dashboard() {
                       </div>
                       <div className="space-y-2">
                         {items.slice(0, 4).map((c) => {
-                          const entry = txs.find(
-                            (x) =>
-                              x.month === month && x.categoryId === c.id,
-                          );
-                          const planned = entry?.planned ?? c.amount;
-                          const actual = entry?.actual ?? 0;
+                          let planned = 0;
+                          let actual = 0;
+                          if (scope === "year") {
+                            for (const m of yearMonths) {
+                              if (!monthInRange(m, c.startDate, c.endDate)) continue;
+                              const entry = txs.find(
+                                (x) => x.month === m && x.categoryId === c.id,
+                              );
+                              planned += entry?.planned ?? c.amount;
+                              actual += entry?.actual ?? 0;
+                            }
+                          } else {
+                            const entry = txs.find(
+                              (x) => x.month === month && x.categoryId === c.id,
+                            );
+                            planned = entry?.planned ?? c.amount;
+                            actual = entry?.actual ?? 0;
+                          }
                           const pct =
                             planned > 0
                               ? Math.min(100, (actual / planned) * 100)

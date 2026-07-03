@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -30,7 +31,7 @@ import {
   useTransactions,
   type CategoryType,
 } from "@/lib/budget-store";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -90,6 +91,34 @@ function TransactionsPage() {
         [field]: value,
       };
       return upsertEntry(prev, entry);
+    });
+  };
+
+  const matchActualToPlanned = (
+    categoryId: string,
+    planned: number,
+    checked: boolean,
+  ) => {
+    update(categoryId, "actual", checked ? planned : 0, planned);
+  };
+
+  const matchAllInType = (type: CategoryType) => {
+    setTxs((prev) => {
+      let next = prev;
+      for (const c of active) {
+        if (c.type !== type) continue;
+        const existing = next.find(
+          (t) => t.month === month && t.categoryId === c.id,
+        );
+        const planned = existing?.planned ?? c.amount;
+        next = upsertEntry(next, {
+          month,
+          categoryId: c.id,
+          planned,
+          actual: planned,
+        });
+      }
+      return next;
     });
   };
 
@@ -158,22 +187,33 @@ function TransactionsPage() {
             if (items.length === 0) return null;
             return (
               <Card key={t.value} className="glass-card">
-                <CardHeader className="pb-3">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
                   <CardTitle className="flex items-center gap-2 font-display text-base">
                     {t.label}
                     <Badge variant="secondary" className="font-normal">
                       {items.length}
                     </Badge>
                   </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 rounded-full text-xs"
+                    onClick={() => matchAllInType(t.value)}
+                    title="Set actual = planned for every row in this section"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Match all to planned
+                  </Button>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
-                        <TableHead className="w-[180px]">Planned (AED)</TableHead>
-                        <TableHead className="w-[180px]">Actual (AED)</TableHead>
-                        <TableHead className="w-[140px] text-right">Diff</TableHead>
+                        <TableHead className="w-[170px]">Planned (AED)</TableHead>
+                        <TableHead className="w-[170px]">Actual (AED)</TableHead>
+                        <TableHead className="w-[90px] text-center">Same as planned</TableHead>
+                        <TableHead className="w-[130px] text-right">Diff</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -186,6 +226,7 @@ function TransactionsPage() {
                         const diff = isIncome(c.type)
                           ? actual - planned
                           : planned - actual;
+                        const matches = planned > 0 && actual === planned;
                         return (
                           <TableRow key={c.id}>
                             <TableCell>
@@ -226,6 +267,15 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Checkbox
+                                checked={matches}
+                                onCheckedChange={(v) =>
+                                  matchActualToPlanned(c.id, planned, !!v)
+                                }
+                                aria-label="Set actual equal to planned"
                               />
                             </TableCell>
                             <TableCell
