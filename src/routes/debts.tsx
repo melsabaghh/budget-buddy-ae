@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,7 @@ import {
   type Category,
   type TransactionEntry,
 } from "@/lib/budget-store";
+import { cn } from "@/lib/utils";
 import { Banknote, CreditCard, CalendarClock, TrendingDown } from "lucide-react";
 
 export const Route = createFileRoute("/debts")({
@@ -100,10 +101,19 @@ function computeStats(cat: Category, txs: TransactionEntry[], now: string): Debt
   };
 }
 
+function isComplete(d: DebtStats) {
+  return (
+    d.totalScheduled !== null &&
+    d.totalScheduled > 0 &&
+    d.paid >= d.totalScheduled
+  );
+}
+
 function DebtsPage() {
   const [categories] = useCategories();
   const [txs] = useTransactions();
   const now = currentMonth();
+  const [filter, setFilter] = useState<"all" | "active" | "complete">("all");
 
   const debts = useMemo(
     () =>
@@ -114,15 +124,21 @@ function DebtsPage() {
     [categories, txs, now],
   );
 
-  const installments = debts.filter((d) => d.cat.type === "installment");
-  const loans = debts.filter((d) => d.cat.type === "loan");
+  const filtered = useMemo(() => {
+    if (filter === "active") return debts.filter((d) => !isComplete(d));
+    if (filter === "complete") return debts.filter((d) => isComplete(d));
+    return debts;
+  }, [debts, filter]);
+
+  const installments = filtered.filter((d) => d.cat.type === "installment");
+  const loans = filtered.filter((d) => d.cat.type === "loan");
 
   const totals = useMemo(() => {
     let scheduled = 0;
     let paid = 0;
     let remaining = 0;
     let monthly = 0;
-    for (const d of debts) {
+    for (const d of filtered) {
       if (d.totalScheduled !== null) scheduled += d.totalScheduled;
       paid += d.paid;
       if (d.remainingScheduled !== null) remaining += d.remainingScheduled;
@@ -130,7 +146,7 @@ function DebtsPage() {
         monthly += d.cat.amount;
     }
     return { scheduled, paid, remaining, monthly };
-  }, [debts]);
+  }, [filtered]);
 
   return (
     <div className="space-y-6">
@@ -156,10 +172,30 @@ function DebtsPage() {
         </div>
       </div>
 
-      {debts.length === 0 ? (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Show</span>
+        <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/60 p-1 shadow-sm">
+          {(["all", "active", "complete"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-all sm:text-sm",
+                filter === f
+                  ? "gradient-brand text-white shadow-md shadow-primary/30"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {f === "all" ? "All" : f === "active" ? "Active" : "Complete"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="py-16 text-center text-sm text-muted-foreground">
-            <p>No installment or loan categories yet.</p>
+            <p>No {filter === "all" ? "" : filter} installment or loan categories yet.</p>
             <Button asChild className="mt-4 gradient-brand text-white shadow-md shadow-primary/25 hover:opacity-95">
               <Link to="/categories">Add one in Categories</Link>
             </Button>
