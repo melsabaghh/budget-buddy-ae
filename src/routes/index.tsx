@@ -122,18 +122,79 @@ function computeMonth(
   };
 }
 
+type Scope = "month" | "year";
+
 function Dashboard() {
   const [categories] = useCategories();
   const [txs] = useTransactions();
   const [savings] = useSavings();
   const month = currentMonth();
+  const [scope, setScope] = useState<Scope>("month");
+  const year = month.slice(0, 4);
 
-  const summary = useMemo(
+  const yearMonths = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+      const mm = String(i + 1).padStart(2, "0");
+      return `${year}-${mm}`;
+    });
+  }, [year]);
+
+  const monthSummary = useMemo(
     () => computeMonth(categories, txs, month),
     [categories, txs, month],
   );
 
+  const yearSummaries = useMemo(
+    () => yearMonths.map((m) => ({ m, s: computeMonth(categories, txs, m) })),
+    [categories, txs, yearMonths],
+  );
+
+  const yearSummary = useMemo(() => {
+    const byType: Record<CategoryType, { planned: number; actual: number }> = {
+      income: { planned: 0, actual: 0 },
+      bill: { planned: 0, actual: 0 },
+      utility: { planned: 0, actual: 0 },
+      expense: { planned: 0, actual: 0 },
+      installment: { planned: 0, actual: 0 },
+      loan: { planned: 0, actual: 0 },
+    };
+    let pIn = 0, aIn = 0, pOut = 0, aOut = 0;
+    const activeMap = new Map<string, Category>();
+    for (const { s } of yearSummaries) {
+      pIn += s.plannedIncome;
+      aIn += s.actualIncome;
+      pOut += s.plannedOut;
+      aOut += s.actualOut;
+      for (const k of Object.keys(s.byType) as CategoryType[]) {
+        byType[k].planned += s.byType[k].planned;
+        byType[k].actual += s.byType[k].actual;
+      }
+      for (const c of s.active) activeMap.set(c.id, c);
+    }
+    return {
+      plannedIncome: pIn,
+      actualIncome: aIn,
+      plannedOut: pOut,
+      actualOut: aOut,
+      plannedNet: pIn - pOut,
+      actualNet: aIn - aOut,
+      active: Array.from(activeMap.values()),
+      byType,
+    };
+  }, [yearSummaries]);
+
+  const summary = scope === "year" ? yearSummary : monthSummary;
+
   const trend = useMemo(() => {
+    if (scope === "year") {
+      return yearSummaries.map(({ m, s }) => ({
+        month: m,
+        label: new Date(`${m}-01`).toLocaleString("en-US", { month: "short" }),
+        income: s.actualIncome,
+        spending: s.actualOut,
+        net: s.actualNet,
+      }));
+    }
     const arr: {
       month: string;
       label: string;
@@ -153,7 +214,7 @@ function Dashboard() {
       });
     }
     return arr;
-  }, [categories, txs, month]);
+  }, [scope, yearSummaries, categories, txs, month]);
 
   const spendingByType = useMemo(() => {
     return (Object.keys(summary.byType) as CategoryType[])
@@ -176,19 +237,29 @@ function Dashboard() {
   }, [summary.byType]);
 
   const topOverspend = useMemo(() => {
-    return summary.active
+    const rows = summary.active
       .filter((c) => !isIncome(c.type))
       .map((c) => {
-        const e = txs.find(
-          (t) => t.month === month && t.categoryId === c.id,
-        );
-        const planned = e?.planned ?? c.amount;
-        const actual = e?.actual ?? 0;
+        let planned = 0;
+        let actual = 0;
+        if (scope === "year") {
+          for (const m of yearMonths) {
+            if (!monthInRange(m, c.startDate, c.endDate)) continue;
+            const e = txs.find((t) => t.month === m && t.categoryId === c.id);
+            planned += e?.planned ?? c.amount;
+            actual += e?.actual ?? 0;
+          }
+        } else {
+          const e = txs.find(
+            (t) => t.month === month && t.categoryId === c.id,
+          );
+          planned = e?.planned ?? c.amount;
+          actual = e?.actual ?? 0;
+        }
         return { c, planned, actual, over: actual - planned };
-      })
-      .sort((a, b) => b.over - a.over)
-      .slice(0, 5);
-  }, [summary.active, txs, month]);
+      });
+    return rows.sort((a, b) => b.over - a.over).slice(0, 5);
+  }, [summary.active, txs, month, scope, yearMonths]);
 
   const savingsRate =
     summary.actualIncome > 0
