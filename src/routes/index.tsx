@@ -459,7 +459,9 @@ function Dashboard() {
               Spending breakdown
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Where your money went this month.
+              {scope === "year"
+                ? `Where your money went across ${year}.`
+                : "Where your money went this month."}
             </p>
           </CardHeader>
           <CardContent>
