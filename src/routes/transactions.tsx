@@ -94,6 +94,34 @@ function TransactionsPage() {
     });
   };
 
+  const matchActualToPlanned = (
+    categoryId: string,
+    planned: number,
+    checked: boolean,
+  ) => {
+    update(categoryId, "actual", checked ? planned : 0, planned);
+  };
+
+  const matchAllInType = (type: CategoryType) => {
+    setTxs((prev) => {
+      let next = prev;
+      for (const c of active) {
+        if (c.type !== type) continue;
+        const existing = next.find(
+          (t) => t.month === month && t.categoryId === c.id,
+        );
+        const planned = existing?.planned ?? c.amount;
+        next = upsertEntry(next, {
+          month,
+          categoryId: c.id,
+          planned,
+          actual: planned,
+        });
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-6 shadow-lg shadow-primary/5 backdrop-blur-xl">
