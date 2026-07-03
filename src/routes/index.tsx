@@ -377,10 +377,12 @@ function Dashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="font-display text-base">
-                  6-month cashflow
+                  {scope === "year" ? `${year} cashflow` : "6-month cashflow"}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Actual income, spending and net across recent months.
+                  {scope === "year"
+                    ? "Actual income, spending and net across every month of the year."
+                    : "Actual income, spending and net across recent months."}
                 </p>
               </div>
               <Badge variant="secondary" className="font-normal">
