@@ -744,12 +744,24 @@ function Dashboard() {
                       </div>
                       <div className="space-y-2">
                         {items.slice(0, 4).map((c) => {
-                          const entry = txs.find(
-                            (x) =>
-                              x.month === month && x.categoryId === c.id,
-                          );
-                          const planned = entry?.planned ?? c.amount;
-                          const actual = entry?.actual ?? 0;
+                          let planned = 0;
+                          let actual = 0;
+                          if (scope === "year") {
+                            for (const m of yearMonths) {
+                              if (!monthInRange(m, c.startDate, c.endDate)) continue;
+                              const entry = txs.find(
+                                (x) => x.month === m && x.categoryId === c.id,
+                              );
+                              planned += entry?.planned ?? c.amount;
+                              actual += entry?.actual ?? 0;
+                            }
+                          } else {
+                            const entry = txs.find(
+                              (x) => x.month === month && x.categoryId === c.id,
+                            );
+                            planned = entry?.planned ?? c.amount;
+                            actual = entry?.actual ?? 0;
+                          }
                           const pct =
                             planned > 0
                               ? Math.min(100, (actual / planned) * 100)
