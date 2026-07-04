@@ -198,7 +198,11 @@ function DebtsPage() {
             <span className="text-income">{lCount.complete} complete</span>
           </span>
         </div>
+      </div>
 
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Show</span>
+        <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/60 p-1 shadow-sm">
           {(["all", "active", "complete"] as const).map((f) => (
             <button
               key={f}
@@ -215,6 +219,7 @@ function DebtsPage() {
           ))}
         </div>
       </div>
+
 
       {filtered.length === 0 ? (
         <Card className="glass-card">
