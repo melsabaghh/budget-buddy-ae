@@ -87,9 +87,14 @@ function CategoriesPage() {
     setOpen(true);
   };
   const startEdit = (c: Category) => {
-    setDraft({ ...c, endDate: c.endDate ?? "" });
+    const total =
+      isDebt(c.type) && c.endDate
+        ? round2(c.amount * monthsBetween(c.startDate, c.endDate))
+        : 0;
+    setDraft({ ...c, endDate: c.endDate ?? "", totalAmount: total });
     setOpen(true);
   };
+
 
   const save = () => {
     if (!draft.name.trim()) return;
