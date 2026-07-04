@@ -181,11 +181,24 @@ function DebtsPage() {
           <Stat icon={<TrendingDown className="h-4 w-4" />} label="Remaining balance" value={AED(totals.remaining)} tone="expense" />
           <Stat icon={<CalendarClock className="h-4 w-4" />} label="Monthly commitment" value={AED(totals.monthly)} />
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Show</span>
-        <div className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-card/60 p-1 shadow-sm">
+        <div className="relative mt-4 flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1 font-medium">
+            Installments: <span className="font-semibold">{iCount.total}</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-primary">{iCount.active} active</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-income">{iCount.complete} complete</span>
+          </span>
+          <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1 font-medium">
+            Loans: <span className="font-semibold">{lCount.total}</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-primary">{lCount.active} active</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-income">{lCount.complete} complete</span>
+          </span>
+        </div>
+
           {(["all", "active", "complete"] as const).map((f) => (
             <button
               key={f}
