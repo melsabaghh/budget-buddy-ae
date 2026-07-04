@@ -48,7 +48,7 @@ export const Route = createFileRoute("/categories")({
   component: CategoriesPage,
 });
 
-type Draft = Omit<Category, "id"> & { id?: string };
+type Draft = Omit<Category, "id"> & { id?: string; totalAmount?: number };
 
 const emptyDraft: Draft = {
   name: "",
@@ -57,7 +57,25 @@ const emptyDraft: Draft = {
   startDate: currentMonth(),
   endDate: "",
   notes: "",
+  totalAmount: 0,
 };
+
+const isDebt = (t: CategoryType) => t === "installment" || t === "loan";
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function monthsBetween(start: string, end: string) {
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  return (ey - sy) * 12 + (em - sm) + 1;
+}
+
+function addMonths(start: string, delta: number) {
+  const [y, m] = start.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 
 function CategoriesPage() {
   const [categories, setCategories] = useCategories();
@@ -69,9 +87,14 @@ function CategoriesPage() {
     setOpen(true);
   };
   const startEdit = (c: Category) => {
-    setDraft({ ...c, endDate: c.endDate ?? "" });
+    const total =
+      isDebt(c.type) && c.endDate
+        ? round2(c.amount * monthsBetween(c.startDate, c.endDate))
+        : 0;
+    setDraft({ ...c, endDate: c.endDate ?? "", totalAmount: total });
     setOpen(true);
   };
+
 
   const save = () => {
     if (!draft.name.trim()) return;
@@ -150,35 +173,96 @@ function CategoriesPage() {
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Amount (AED)">
+                <Field label={isDebt(draft.type) ? "Monthly installment (AED)" : "Amount (AED)"}>
                   <Input
                     type="number"
                     min="0"
                     step="0.01"
-                    value={draft.amount}
-                    onChange={(e) =>
-                      setDraft({ ...draft, amount: Number(e.target.value) || 0 })
-                    }
+                    value={draft.amount || ""}
+                    onChange={(e) => {
+                      const amount = Number(e.target.value) || 0;
+                      const next = { ...draft, amount };
+                      if (isDebt(draft.type)) {
+                        if (draft.endDate && draft.startDate) {
+                          const m = monthsBetween(draft.startDate, draft.endDate);
+                          next.totalAmount = round2(amount * m);
+                        } else if (draft.totalAmount && amount > 0) {
+                          next.endDate = addMonths(
+                            draft.startDate,
+                            Math.max(0, Math.ceil(draft.totalAmount / amount) - 1),
+                          );
+                        }
+                      }
+                      setDraft(next);
+                    }}
                   />
                 </Field>
               </div>
+              {isDebt(draft.type) && (
+                <Field label="Total amount (AED)">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={draft.totalAmount || ""}
+                    onChange={(e) => {
+                      const total = Number(e.target.value) || 0;
+                      const next = { ...draft, totalAmount: total };
+                      if (draft.endDate && draft.startDate && total > 0) {
+                        const m = monthsBetween(draft.startDate, draft.endDate);
+                        if (m > 0) next.amount = round2(total / m);
+                      } else if (draft.amount > 0 && total > 0) {
+                        next.endDate = addMonths(
+                          draft.startDate,
+                          Math.max(0, Math.ceil(total / draft.amount) - 1),
+                        );
+                      }
+                      setDraft(next);
+                    }}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Enter any two of total, monthly, and end month — the third fills in automatically.
+                  </p>
+                </Field>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Start month">
                   <Input
                     type="month"
                     value={draft.startDate}
-                    onChange={(e) =>
-                      setDraft({ ...draft, startDate: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const startDate = e.target.value;
+                      const next = { ...draft, startDate };
+                      if (isDebt(draft.type)) {
+                        if (draft.endDate && draft.totalAmount) {
+                          const m = monthsBetween(startDate, draft.endDate);
+                          if (m > 0) next.amount = round2(draft.totalAmount / m);
+                        } else if (draft.endDate && draft.amount > 0) {
+                          const m = monthsBetween(startDate, draft.endDate);
+                          next.totalAmount = round2(draft.amount * m);
+                        }
+                      }
+                      setDraft(next);
+                    }}
                   />
                 </Field>
                 <Field label="End month (optional)">
                   <Input
                     type="month"
                     value={draft.endDate ?? ""}
-                    onChange={(e) =>
-                      setDraft({ ...draft, endDate: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const endDate = e.target.value;
+                      const next = { ...draft, endDate };
+                      if (isDebt(draft.type) && endDate && draft.startDate) {
+                        const m = monthsBetween(draft.startDate, endDate);
+                        if (draft.totalAmount && m > 0) {
+                          next.amount = round2(draft.totalAmount / m);
+                        } else if (draft.amount > 0) {
+                          next.totalAmount = round2(draft.amount * m);
+                        }
+                      }
+                      setDraft(next);
+                    }}
                   />
                 </Field>
               </div>
@@ -191,6 +275,7 @@ function CategoriesPage() {
                 />
               </Field>
             </div>
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancel

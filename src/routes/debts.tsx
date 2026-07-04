@@ -133,6 +133,16 @@ function DebtsPage() {
   const installments = filtered.filter((d) => d.cat.type === "installment");
   const loans = filtered.filter((d) => d.cat.type === "loan");
 
+  const countBy = (arr: DebtStats[]) => ({
+    total: arr.length,
+    active: arr.filter((d) => !isComplete(d)).length,
+    complete: arr.filter((d) => isComplete(d)).length,
+  });
+  const allInstallments = debts.filter((d) => d.cat.type === "installment");
+  const allLoans = debts.filter((d) => d.cat.type === "loan");
+  const iCount = countBy(allInstallments);
+  const lCount = countBy(allLoans);
+
   const totals = useMemo(() => {
     let scheduled = 0;
     let paid = 0;
@@ -147,6 +157,7 @@ function DebtsPage() {
     }
     return { scheduled, paid, remaining, monthly };
   }, [filtered]);
+
 
   return (
     <div className="space-y-6">
@@ -170,6 +181,23 @@ function DebtsPage() {
           <Stat icon={<TrendingDown className="h-4 w-4" />} label="Remaining balance" value={AED(totals.remaining)} tone="expense" />
           <Stat icon={<CalendarClock className="h-4 w-4" />} label="Monthly commitment" value={AED(totals.monthly)} />
         </div>
+
+        <div className="relative mt-4 flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1 font-medium">
+            Installments: <span className="font-semibold">{iCount.total}</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-primary">{iCount.active} active</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-income">{iCount.complete} complete</span>
+          </span>
+          <span className="rounded-full border border-border/60 bg-background/60 px-3 py-1 font-medium">
+            Loans: <span className="font-semibold">{lCount.total}</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-primary">{lCount.active} active</span>
+            <span className="mx-1 text-muted-foreground">·</span>
+            <span className="text-income">{lCount.complete} complete</span>
+          </span>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -192,6 +220,7 @@ function DebtsPage() {
         </div>
       </div>
 
+
       {filtered.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="py-16 text-center text-sm text-muted-foreground">
@@ -213,16 +242,22 @@ function DebtsPage() {
 
 function DebtGroup({ title, items }: { title: string; items: DebtStats[] }) {
   if (items.length === 0) return null;
+  const active = items.filter((d) => !isComplete(d)).length;
+  const complete = items.filter((d) => isComplete(d)).length;
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 font-display text-base">
+        <CardTitle className="flex flex-wrap items-center gap-2 font-display text-base">
           {title}
           <Badge variant="secondary" className="font-normal">
             {items.length}
           </Badge>
+          <span className="ml-1 text-xs font-normal text-primary">{active} active</span>
+          <span className="text-xs font-normal text-muted-foreground">·</span>
+          <span className="text-xs font-normal text-income">{complete} complete</span>
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {items.map((d) => (
           <DebtCard key={d.cat.id} d={d} />
