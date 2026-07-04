@@ -48,7 +48,7 @@ export const Route = createFileRoute("/categories")({
   component: CategoriesPage,
 });
 
-type Draft = Omit<Category, "id"> & { id?: string };
+type Draft = Omit<Category, "id"> & { id?: string; totalAmount?: number };
 
 const emptyDraft: Draft = {
   name: "",
@@ -57,7 +57,25 @@ const emptyDraft: Draft = {
   startDate: currentMonth(),
   endDate: "",
   notes: "",
+  totalAmount: 0,
 };
+
+const isDebt = (t: CategoryType) => t === "installment" || t === "loan";
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+function monthsBetween(start: string, end: string) {
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  return (ey - sy) * 12 + (em - sm) + 1;
+}
+
+function addMonths(start: string, delta: number) {
+  const [y, m] = start.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 
 function CategoriesPage() {
   const [categories, setCategories] = useCategories();
