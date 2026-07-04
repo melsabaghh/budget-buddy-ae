@@ -242,16 +242,22 @@ function DebtsPage() {
 
 function DebtGroup({ title, items }: { title: string; items: DebtStats[] }) {
   if (items.length === 0) return null;
+  const active = items.filter((d) => !isComplete(d)).length;
+  const complete = items.filter((d) => isComplete(d)).length;
   return (
     <Card className="glass-card">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 font-display text-base">
+        <CardTitle className="flex flex-wrap items-center gap-2 font-display text-base">
           {title}
           <Badge variant="secondary" className="font-normal">
             {items.length}
           </Badge>
+          <span className="ml-1 text-xs font-normal text-primary">{active} active</span>
+          <span className="text-xs font-normal text-muted-foreground">·</span>
+          <span className="text-xs font-normal text-income">{complete} complete</span>
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {items.map((d) => (
           <DebtCard key={d.cat.id} d={d} />
