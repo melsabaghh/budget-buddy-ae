@@ -133,6 +133,16 @@ function DebtsPage() {
   const installments = filtered.filter((d) => d.cat.type === "installment");
   const loans = filtered.filter((d) => d.cat.type === "loan");
 
+  const countBy = (arr: DebtStats[]) => ({
+    total: arr.length,
+    active: arr.filter((d) => !isComplete(d)).length,
+    complete: arr.filter((d) => isComplete(d)).length,
+  });
+  const allInstallments = debts.filter((d) => d.cat.type === "installment");
+  const allLoans = debts.filter((d) => d.cat.type === "loan");
+  const iCount = countBy(allInstallments);
+  const lCount = countBy(allLoans);
+
   const totals = useMemo(() => {
     let scheduled = 0;
     let paid = 0;
@@ -147,6 +157,7 @@ function DebtsPage() {
     }
     return { scheduled, paid, remaining, monthly };
   }, [filtered]);
+
 
   return (
     <div className="space-y-6">
