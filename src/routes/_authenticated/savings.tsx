@@ -27,7 +27,7 @@ import {
 } from "@/lib/budget-store";
 import { Pencil, PiggyBank, Plus, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/savings")({
+export const Route = createFileRoute("/_authenticated/savings")({
   head: () => ({
     meta: [
       { title: "Savings · Personal Budget" },

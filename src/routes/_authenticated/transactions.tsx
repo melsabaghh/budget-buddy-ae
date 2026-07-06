@@ -33,7 +33,7 @@ import {
 } from "@/lib/budget-store";
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
-export const Route = createFileRoute("/transactions")({
+export const Route = createFileRoute("/_authenticated/transactions")({
   head: () => ({
     meta: [
       { title: "Transactions · Personal Budget" },
