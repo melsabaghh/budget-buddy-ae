@@ -126,12 +126,34 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAuthRoute = pathname.startsWith("/auth");
+
+  useEffect(() => {
+    // Seed user id for namespaced local storage on load
+    supabase.auth.getSession().then(({ data }) => {
+      setBudgetUserId(data.session?.user?.id ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED"
+      )
+        return;
+      setBudgetUserId(session?.user?.id ?? null);
+      router.invalidate();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        <Outlet />
-      </AppShell>
+      {isAuthRoute ? <Outlet /> : <AppShell><Outlet /></AppShell>}
+      <Toaster />
     </QueryClientProvider>
   );
 }
+
