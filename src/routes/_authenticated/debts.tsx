@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Banknote, CreditCard, CalendarClock, TrendingDown } from "lucide-react";
 
-export const Route = createFileRoute("/debts")({
+export const Route = createFileRoute("/_authenticated/debts")({
   head: () => ({
     meta: [
       { title: "Debts · Personal Budget" },

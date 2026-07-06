@@ -53,16 +53,31 @@ export interface SavingsGoal {
   targetDate?: string; // YYYY-MM
 }
 
-const KEYS = {
+const BASE_KEYS = {
   categories: "budget.categories.v1",
   transactions: "budget.transactions.v1",
   savings: "budget.savings.v1",
 };
 
+// Namespaced per authenticated user so switching accounts doesn't leak data.
+let currentUserId: string | null = null;
+
+export function setBudgetUserId(userId: string | null) {
+  if (currentUserId === userId) return;
+  currentUserId = userId;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("budget:user-change"));
+  }
+}
+
+function scoped(key: string) {
+  return currentUserId ? `${key}::${currentUserId}` : `${key}::anon`;
+}
+
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(scoped(key));
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -71,7 +86,7 @@ function read<T>(key: string, fallback: T): T {
 
 function write<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  window.localStorage.setItem(scoped(key), JSON.stringify(value));
   window.dispatchEvent(new CustomEvent("budget:update", { detail: key }));
 }
 
@@ -79,18 +94,22 @@ function useStored<T>(key: string, fallback: T) {
   const [value, setValue] = useState<T>(() => read(key, fallback));
 
   useEffect(() => {
+    const refresh = () => setValue(read(key, fallback));
     const onUpdate = (e: Event) => {
       const ce = e as CustomEvent<string>;
-      if (ce.detail === key) setValue(read(key, fallback));
+      if (ce.detail === key) refresh();
     };
     const onStorage = (e: StorageEvent) => {
-      if (e.key === key) setValue(read(key, fallback));
+      if (e.key === scoped(key)) refresh();
     };
+    const onUserChange = () => refresh();
     window.addEventListener("budget:update", onUpdate);
     window.addEventListener("storage", onStorage);
+    window.addEventListener("budget:user-change", onUserChange);
     return () => {
       window.removeEventListener("budget:update", onUpdate);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("budget:user-change", onUserChange);
     };
   }, [key, fallback]);
 
@@ -111,10 +130,11 @@ function useStored<T>(key: string, fallback: T) {
   return [value, update] as const;
 }
 
-export const useCategories = () => useStored<Category[]>(KEYS.categories, []);
+export const useCategories = () => useStored<Category[]>(BASE_KEYS.categories, []);
 export const useTransactions = () =>
-  useStored<TransactionEntry[]>(KEYS.transactions, []);
-export const useSavings = () => useStored<SavingsGoal[]>(KEYS.savings, []);
+  useStored<TransactionEntry[]>(BASE_KEYS.transactions, []);
+export const useSavings = () => useStored<SavingsGoal[]>(BASE_KEYS.savings, []);
+
 
 // ---------- helpers ----------
 
