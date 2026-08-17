@@ -32,6 +32,8 @@ import {
   type CategoryType,
 } from "@/lib/budget-store";
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { ScanBillDialog } from "@/components/ScanBillDialog";
+
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   head: () => ({
@@ -94,6 +96,27 @@ function TransactionsPage() {
     });
   };
 
+  const applyScanned = (
+    categoryId: string,
+    value: number,
+    mode: "set" | "add",
+  ) => {
+    const cat = active.find((c) => c.id === categoryId);
+    setTxs((prev) => {
+      const existing = prev.find(
+        (t) => t.month === month && t.categoryId === categoryId,
+      );
+      const planned = existing?.planned ?? cat?.amount ?? 0;
+      const current = existing?.actual ?? 0;
+      return upsertEntry(prev, {
+        month,
+        categoryId,
+        planned,
+        actual: mode === "add" ? current + value : value,
+      });
+    });
+  };
+
   const matchActualToPlanned = (
     categoryId: string,
     planned: number,
@@ -101,6 +124,7 @@ function TransactionsPage() {
   ) => {
     update(categoryId, "actual", checked ? planned : 0, planned);
   };
+
 
   const matchAllInType = (type: CategoryType) => {
     setTxs((prev) => {
@@ -138,7 +162,14 @@ function TransactionsPage() {
               Enter planned and actual amounts. Rows appear from each category's start until its end month.
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <ScanBillDialog
+            categories={active}
+            month={month}
+            onApply={applyScanned}
+          />
           <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/70 p-1 shadow-sm">
+
             <Button
               size="icon"
               variant="ghost"
@@ -164,6 +195,8 @@ function TransactionsPage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+          </div>
+
         </div>
 
         <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
