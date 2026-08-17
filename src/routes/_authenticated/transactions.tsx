@@ -162,7 +162,14 @@ function TransactionsPage() {
               Enter planned and actual amounts. Rows appear from each category's start until its end month.
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <ScanBillDialog
+            categories={active}
+            month={month}
+            onApply={applyScanned}
+          />
           <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/70 p-1 shadow-sm">
+
             <Button
               size="icon"
               variant="ghost"
