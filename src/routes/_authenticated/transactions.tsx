@@ -96,6 +96,27 @@ function TransactionsPage() {
     });
   };
 
+  const applyScanned = (
+    categoryId: string,
+    value: number,
+    mode: "set" | "add",
+  ) => {
+    const cat = active.find((c) => c.id === categoryId);
+    setTxs((prev) => {
+      const existing = prev.find(
+        (t) => t.month === month && t.categoryId === categoryId,
+      );
+      const planned = existing?.planned ?? cat?.amount ?? 0;
+      const current = existing?.actual ?? 0;
+      return upsertEntry(prev, {
+        month,
+        categoryId,
+        planned,
+        actual: mode === "add" ? current + value : value,
+      });
+    });
+  };
+
   const matchActualToPlanned = (
     categoryId: string,
     planned: number,
@@ -103,6 +124,7 @@ function TransactionsPage() {
   ) => {
     update(categoryId, "actual", checked ? planned : 0, planned);
   };
+
 
   const matchAllInType = (type: CategoryType) => {
     setTxs((prev) => {
