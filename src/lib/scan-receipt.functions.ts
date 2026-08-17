@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { scanReceiptImage } from "./scan-receipt.server";
+
 
 const schema = z.object({
   image: z.string().min(32).max(12_000_000),
