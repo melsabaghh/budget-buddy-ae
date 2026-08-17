@@ -32,6 +32,8 @@ import {
   type CategoryType,
 } from "@/lib/budget-store";
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { ScanBillDialog } from "@/components/ScanBillDialog";
+
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   head: () => ({
