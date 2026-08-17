@@ -19,5 +19,7 @@ const schema = z.object({
 });
 
 export const scanReceipt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => scanReceiptImage(data.image, data.categories));
+
