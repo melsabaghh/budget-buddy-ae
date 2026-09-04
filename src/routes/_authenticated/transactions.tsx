@@ -242,11 +242,11 @@ function TransactionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="w-[170px]">Planned (AED)</TableHead>
-                        <TableHead className="w-[170px]">Actual (AED)</TableHead>
-                        <TableHead className="w-[90px] text-center">Same as planned</TableHead>
-                        <TableHead className="w-[130px] text-right">Diff</TableHead>
+                        <TableHead className="min-w-[140px]">Name</TableHead>
+                        <TableHead className="w-[200px] min-w-[200px]">Planned (AED)</TableHead>
+                        <TableHead className="w-[200px] min-w-[200px]">Actual (AED)</TableHead>
+                        <TableHead className="w-[110px] min-w-[110px] text-center">Same as planned</TableHead>
+                        <TableHead className="w-[140px] min-w-[140px] text-right">Diff</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -284,6 +284,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
+                                className="h-11 min-w-[140px] text-base sm:h-9"
                               />
                             </TableCell>
                             <TableCell>
@@ -300,6 +301,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
+                                className="h-11 min-w-[140px] text-base sm:h-9"
                               />
                             </TableCell>
                             <TableCell className="text-center">
