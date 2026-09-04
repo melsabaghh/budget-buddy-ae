@@ -284,6 +284,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
+                                className="h-11 min-w-[140px] text-base sm:h-9"
                               />
                             </TableCell>
                             <TableCell>
@@ -300,6 +301,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
+                                className="h-11 min-w-[140px] text-base sm:h-9"
                               />
                             </TableCell>
                             <TableCell className="text-center">
