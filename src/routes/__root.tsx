@@ -85,6 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Personal Budget · AED" },
       { name: "description", content: "Plan and track monthly income, bills, utilities, expenses, installments and loans in AED." },
       { name: "author", content: "Lovable" },
+      { name: "theme-color", content: "#0F172A" },
       { property: "og:title", content: "Personal Budget · AED" },
       { property: "og:description", content: "Plan and track monthly income, bills, utilities, expenses, installments and loans in AED." },
       { property: "og:type", content: "website" },
@@ -94,6 +95,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
