@@ -33,6 +33,8 @@ import {
 } from "@/lib/budget-store";
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { ScanBillDialog } from "@/components/ScanBillDialog";
+import { ImportTransactionsDialog } from "@/components/ImportTransactionsDialog";
+
 
 
 export const Route = createFileRoute("/_authenticated/transactions")({
@@ -163,11 +165,13 @@ function TransactionsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+          <ImportTransactionsDialog month={month} />
           <ScanBillDialog
             categories={active}
             month={month}
             onApply={applyScanned}
           />
+
           <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/70 p-1 shadow-sm">
 
             <Button
