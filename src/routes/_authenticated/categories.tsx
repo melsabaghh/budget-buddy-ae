@@ -37,6 +37,7 @@ import {
   type CategoryType,
 } from "@/lib/budget-store";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ImportExcelDialog } from "@/components/ImportExcelDialog";
 
 export const Route = createFileRoute("/_authenticated/categories")({
   head: () => ({
@@ -133,6 +134,8 @@ function CategoriesPage() {
               Each category appears in monthly transactions from its start month until the end date.
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <ImportExcelDialog />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={startNew} className="gradient-brand text-white shadow-md shadow-primary/25 hover:opacity-95">
