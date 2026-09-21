@@ -288,6 +288,7 @@ function CategoriesPage() {
           </DialogContent>
         </Dialog>
         </div>
+        </div>
       </div>
 
 
