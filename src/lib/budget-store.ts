@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import {
+  loadBudgetData,
+  saveBudgetData,
+} from "@/lib/budget-sync.functions";
 
 export type CategoryType =
   | "income"
