@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import {
+  loadBudgetData,
+  saveBudgetData,
+} from "@/lib/budget-sync.functions";
 
 export type CategoryType =
   | "income"
@@ -67,11 +71,76 @@ export function setBudgetUserId(userId: string | null) {
   currentUserId = userId;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("budget:user-change"));
+    if (userId) void hydrateFromCloud(userId);
   }
 }
 
 function scoped(key: string) {
   return currentUserId ? `${key}::${currentUserId}` : `${key}::anon`;
+}
+
+// ---------- cloud sync ----------
+
+const MIGRATED_FLAG = (uid: string) => `budget.cloud-migrated.v1::${uid}`;
+let pushTimer: ReturnType<typeof setTimeout> | null = null;
+let pushing = false;
+let pullInFlight: Promise<void> | null = null;
+
+function localSnapshot() {
+  return {
+    categories: read<Category[]>(BASE_KEYS.categories, []),
+    transactions: read<TransactionEntry[]>(BASE_KEYS.transactions, []),
+    savings: read<SavingsGoal[]>(BASE_KEYS.savings, []),
+  };
+}
+
+async function hydrateFromCloud(userId: string) {
+  if (pullInFlight) return pullInFlight;
+  pullInFlight = (async () => {
+    try {
+      const cloud = await loadBudgetData();
+      const local = localSnapshot();
+      const cloudEmpty =
+        cloud.categories.length === 0 &&
+        cloud.transactions.length === 0 &&
+        cloud.savings.length === 0;
+      const localHasData =
+        local.categories.length > 0 ||
+        local.transactions.length > 0 ||
+        local.savings.length > 0;
+
+      if (cloudEmpty && localHasData) {
+        // First sync from this device: push existing local data up.
+        await saveBudgetData({ data: local });
+      } else if (!cloudEmpty) {
+        write(BASE_KEYS.categories, cloud.categories as Category[]);
+        write(BASE_KEYS.transactions, cloud.transactions as TransactionEntry[]);
+        write(BASE_KEYS.savings, cloud.savings as SavingsGoal[]);
+      }
+      window.localStorage.setItem(MIGRATED_FLAG(userId), "1");
+    } catch (err) {
+      console.error("[budget] cloud sync failed", err);
+    } finally {
+      pullInFlight = null;
+    }
+  })();
+  return pullInFlight;
+}
+
+function schedulePushToCloud() {
+  if (!currentUserId || typeof window === "undefined") return;
+  if (pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    if (pushing || !currentUserId) return;
+    pushing = true;
+    try {
+      await saveBudgetData({ data: localSnapshot() });
+    } catch (err) {
+      console.error("[budget] cloud save failed", err);
+    } finally {
+      pushing = false;
+    }
+  }, 800);
 }
 
 function read<T>(key: string, fallback: T): T {
@@ -88,6 +157,7 @@ function write<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(scoped(key), JSON.stringify(value));
   window.dispatchEvent(new CustomEvent("budget:update", { detail: key }));
+  schedulePushToCloud();
 }
 
 function useStored<T>(key: string, fallback: T) {
