@@ -152,10 +152,15 @@ export function AppShell({ children }: { children?: ReactNode }) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                    <UserIcon className="h-4 w-4" />
-                    Cloud sync coming next
-                  </DropdownMenuItem>
+                  <RestoreDeviceDataDialog
+                    trigger={
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <HardDriveDownload className="h-4 w-4" />
+                        Restore data from this device
+                      </DropdownMenuItem>
+                    }
+                  />
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleSignOut}

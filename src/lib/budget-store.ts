@@ -143,7 +143,78 @@ function schedulePushToCloud() {
   }, 800);
 }
 
+// ---------- device backups (restore data saved on this device) ----------
+
+export interface DeviceBackup {
+  scope: string; // storage suffix, e.g. "anon" or a user id
+  label: string;
+  categories: number;
+  transactions: number;
+  savings: number;
+}
+
+function parseKey<T>(key: string, fallback: T): T {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function listDeviceBackups(): DeviceBackup[] {
+  if (typeof window === "undefined") return [];
+  const scopes = new Set<string>();
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const k = window.localStorage.key(i);
+    if (!k) continue;
+    for (const base of Object.values(BASE_KEYS)) {
+      if (k === base) scopes.add("");
+      else if (k.startsWith(`${base}::`)) scopes.add(k.slice(base.length + 2));
+    }
+  }
+  const out: DeviceBackup[] = [];
+  scopes.forEach((scope) => {
+    const suffix = scope ? `::${scope}` : "";
+    const categories = parseKey<Category[]>(`${BASE_KEYS.categories}${suffix}`, []);
+    const transactions = parseKey<TransactionEntry[]>(
+      `${BASE_KEYS.transactions}${suffix}`,
+      [],
+    );
+    const savings = parseKey<SavingsGoal[]>(`${BASE_KEYS.savings}${suffix}`, []);
+    if (!categories.length && !transactions.length && !savings.length) return;
+    const isCurrent = scope === (currentUserId ?? "anon");
+    out.push({
+      scope,
+      label: isCurrent
+        ? "This account (current data)"
+        : scope === "anon" || scope === ""
+          ? "Saved before sign-in"
+          : `Another account (${scope.slice(0, 8)}…)`,
+      categories: categories.length,
+      transactions: transactions.length,
+      savings: savings.length,
+    });
+  });
+  return out.sort((a, b) => b.categories + b.transactions - (a.categories + a.transactions));
+}
+
+export async function restoreDeviceBackup(scope: string) {
+  if (typeof window === "undefined") return;
+  const suffix = scope ? `::${scope}` : "";
+  const snapshot = {
+    categories: parseKey<Category[]>(`${BASE_KEYS.categories}${suffix}`, []),
+    transactions: parseKey<TransactionEntry[]>(`${BASE_KEYS.transactions}${suffix}`, []),
+    savings: parseKey<SavingsGoal[]>(`${BASE_KEYS.savings}${suffix}`, []),
+  };
+  write(BASE_KEYS.categories, snapshot.categories);
+  write(BASE_KEYS.transactions, snapshot.transactions);
+  write(BASE_KEYS.savings, snapshot.savings);
+  if (currentUserId) await saveBudgetData({ data: snapshot });
+}
+
 function read<T>(key: string, fallback: T): T {
+
   if (typeof window === "undefined") return fallback;
   try {
     const raw = window.localStorage.getItem(scoped(key));
