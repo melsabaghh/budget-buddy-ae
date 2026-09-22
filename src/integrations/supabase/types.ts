@@ -17,6 +17,7 @@ export type Database = {
       categories: {
         Row: {
           amount: number
+          client_id: string | null
           created_at: string
           end_month: string | null
           id: string
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          client_id?: string | null
           created_at?: string
           end_month?: string | null
           id?: string
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          client_id?: string | null
           created_at?: string
           end_month?: string | null
           id?: string
