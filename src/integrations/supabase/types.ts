@@ -85,6 +85,7 @@ export type Database = {
       }
       savings_goals: {
         Row: {
+          client_id: string | null
           created_at: string
           id: string
           monthly_contribution: number
@@ -96,6 +97,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           created_at?: string
           id?: string
           monthly_contribution?: number
@@ -107,6 +109,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_id?: string | null
           created_at?: string
           id?: string
           monthly_contribution?: number
@@ -123,6 +126,7 @@ export type Database = {
         Row: {
           actual: number
           category_id: string
+          client_id: string | null
           created_at: string
           id: string
           month: string
@@ -133,6 +137,7 @@ export type Database = {
         Insert: {
           actual?: number
           category_id: string
+          client_id?: string | null
           created_at?: string
           id?: string
           month: string
@@ -143,6 +148,7 @@ export type Database = {
         Update: {
           actual?: number
           category_id?: string
+          client_id?: string | null
           created_at?: string
           id?: string
           month?: string
