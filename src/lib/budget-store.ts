@@ -157,6 +157,7 @@ function write<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(scoped(key), JSON.stringify(value));
   window.dispatchEvent(new CustomEvent("budget:update", { detail: key }));
+  schedulePushToCloud();
 }
 
 function useStored<T>(key: string, fallback: T) {
