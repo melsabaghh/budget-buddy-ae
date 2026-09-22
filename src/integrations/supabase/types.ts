@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          amount: number
+          created_at: string
+          end_month: string | null
+          id: string
+          name: string
+          notes: string | null
+          start_month: string
+          total_amount: number | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          end_month?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          start_month: string
+          total_amount?: number | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          end_month?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          start_month?: string
+          total_amount?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -37,6 +79,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      savings_goals: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_contribution: number
+          name: string
+          saved: number
+          target_amount: number
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_contribution?: number
+          name: string
+          saved?: number
+          target_amount?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_contribution?: number
+          name?: string
+          saved?: number
+          target_amount?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transaction_entries: {
+        Row: {
+          actual: number
+          category_id: string
+          created_at: string
+          id: string
+          month: string
+          planned: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual?: number
+          category_id: string
+          created_at?: string
+          id?: string
+          month: string
+          planned?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual?: number
+          category_id?: string
+          created_at?: string
+          id?: string
+          month?: string
+          planned?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
