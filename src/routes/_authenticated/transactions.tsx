@@ -243,14 +243,23 @@ function TransactionsPage() {
                   </Button>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <Table>
+                  <Table className="table-fixed min-w-[470px] sm:min-w-[620px]">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[140px]">Name</TableHead>
-                        <TableHead className="w-[200px] min-w-[200px]">Planned (AED)</TableHead>
-                        <TableHead className="w-[200px] min-w-[200px]">Actual (AED)</TableHead>
-                        <TableHead className="w-[110px] min-w-[110px] text-center">Same as planned</TableHead>
-                        <TableHead className="w-[140px] min-w-[140px] text-right">Diff</TableHead>
+                        <TableHead className="px-3">Name</TableHead>
+                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">
+                          <span className="sm:hidden">Planned</span>
+                          <span className="hidden sm:inline">Planned (AED)</span>
+                        </TableHead>
+                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">
+                          <span className="sm:hidden">Actual</span>
+                          <span className="hidden sm:inline">Actual (AED)</span>
+                        </TableHead>
+                        <TableHead className="w-[44px] px-1 text-center sm:w-[88px] sm:px-1.5">
+                          <span className="sm:hidden">Same</span>
+                          <span className="hidden sm:inline">Same as planned</span>
+                        </TableHead>
+                        <TableHead className="w-[112px] px-3 text-right sm:w-[118px]">Diff</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -266,7 +275,7 @@ function TransactionsPage() {
                         const matches = planned > 0 && actual === planned;
                         return (
                           <TableRow key={c.id}>
-                            <TableCell>
+                            <TableCell className="px-3 py-1.5">
                               <div className="text-sm font-medium">{c.name}</div>
                               {c.endDate && (
                                 <div className="text-xs text-muted-foreground">
@@ -274,9 +283,10 @@ function TransactionsPage() {
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-1.5 py-1.5">
                               <Input
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 step="0.01"
                                 value={planned}
@@ -288,12 +298,13 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
-                                className="h-11 min-w-[140px] text-base sm:h-9"
+                                className="amount-input h-9 w-[92px] px-1.5 shadow-none sm:h-8 sm:w-[112px]"
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-1.5 py-1.5">
                               <Input
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 step="0.01"
                                 value={actual}
@@ -305,10 +316,10 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
-                                className="h-11 min-w-[140px] text-base sm:h-9"
+                                className="amount-input h-9 w-[92px] px-1.5 shadow-none sm:h-8 sm:w-[112px]"
                               />
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="px-1 text-center sm:px-1.5">
                               <Checkbox
                                 checked={matches}
                                 onCheckedChange={(v) =>
@@ -319,7 +330,7 @@ function TransactionsPage() {
                             </TableCell>
                             <TableCell
                               className={
-                                "text-right text-sm font-medium " +
+                                "px-3 text-right text-sm font-medium tabular-nums " +
                                 (diff >= 0 ? "text-income" : "text-expense")
                               }
                             >
