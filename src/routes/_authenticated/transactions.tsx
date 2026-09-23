@@ -274,9 +274,10 @@ function TransactionsPage() {
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-1.5 py-1.5">
                               <Input
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 step="0.01"
                                 value={planned}
@@ -288,12 +289,13 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
-                                className="h-11 min-w-[140px] text-base sm:h-9"
+                                className="amount-input h-9 w-full max-w-[118px] px-2 shadow-none sm:h-8"
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-1.5 py-1.5">
                               <Input
                                 type="number"
+                                inputMode="decimal"
                                 min="0"
                                 step="0.01"
                                 value={actual}
@@ -305,7 +307,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
-                                className="h-11 min-w-[140px] text-base sm:h-9"
+                                className="amount-input h-9 w-full max-w-[118px] px-2 shadow-none sm:h-8"
                               />
                             </TableCell>
                             <TableCell className="text-center">
