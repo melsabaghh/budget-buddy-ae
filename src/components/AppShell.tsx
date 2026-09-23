@@ -9,7 +9,9 @@ import {
   CreditCard,
   LogOut,
   User as UserIcon,
+  HardDriveDownload,
 } from "lucide-react";
+import { RestoreDeviceDataDialog } from "@/components/RestoreDeviceDataDialog";
 import { currentMonth, monthLabel } from "@/lib/budget-store";
 import { supabase } from "@/integrations/supabase/client";
 import {
