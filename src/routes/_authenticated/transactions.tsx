@@ -313,7 +313,7 @@ function TransactionsPage() {
                                 className="amount-input h-9 w-[92px] px-1.5 shadow-none sm:h-8 sm:w-[112px]"
                               />
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="px-1 text-center sm:px-1.5">
                               <Checkbox
                                 checked={matches}
                                 onCheckedChange={(v) =>
