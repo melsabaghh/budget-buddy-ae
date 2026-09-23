@@ -307,7 +307,7 @@ function TransactionsPage() {
                                     c.amount,
                                   )
                                 }
-                                className="amount-input h-9 w-full max-w-[118px] px-2 shadow-none sm:h-8"
+                                className="amount-input h-9 w-[112px] px-2 shadow-none sm:h-8"
                               />
                             </TableCell>
                             <TableCell className="text-center">
