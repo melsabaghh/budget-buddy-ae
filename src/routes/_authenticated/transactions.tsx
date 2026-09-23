@@ -243,7 +243,7 @@ function TransactionsPage() {
                   </Button>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <Table>
+                  <Table className="table-fixed min-w-[600px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="min-w-[128px] px-3">Name</TableHead>
