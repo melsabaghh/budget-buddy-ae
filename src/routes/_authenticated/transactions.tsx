@@ -266,7 +266,7 @@ function TransactionsPage() {
                         const matches = planned > 0 && actual === planned;
                         return (
                           <TableRow key={c.id}>
-                            <TableCell>
+                            <TableCell className="px-3 py-1.5">
                               <div className="text-sm font-medium">{c.name}</div>
                               {c.endDate && (
                                 <div className="text-xs text-muted-foreground">
