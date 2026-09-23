@@ -247,9 +247,15 @@ function TransactionsPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="px-3">Name</TableHead>
-                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">Planned (AED)</TableHead>
-                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">Actual (AED)</TableHead>
-                        <TableHead className="w-[40px] px-1 text-center sm:w-[88px] sm:px-1.5">
+                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">
+                          <span className="sm:hidden">Planned</span>
+                          <span className="hidden sm:inline">Planned (AED)</span>
+                        </TableHead>
+                        <TableHead className="w-[100px] px-1 text-right sm:w-[126px] sm:px-1.5">
+                          <span className="sm:hidden">Actual</span>
+                          <span className="hidden sm:inline">Actual (AED)</span>
+                        </TableHead>
+                        <TableHead className="w-[44px] px-1 text-center sm:w-[88px] sm:px-1.5">
                           <span className="sm:hidden">Same</span>
                           <span className="hidden sm:inline">Same as planned</span>
                         </TableHead>
