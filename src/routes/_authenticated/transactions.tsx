@@ -321,7 +321,7 @@ function TransactionsPage() {
                             </TableCell>
                             <TableCell
                               className={
-                                "text-right text-sm font-medium " +
+                                "px-3 text-right text-sm font-medium tabular-nums " +
                                 (diff >= 0 ? "text-income" : "text-expense")
                               }
                             >
