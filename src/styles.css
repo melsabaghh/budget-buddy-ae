@@ -153,3 +153,18 @@
 @utility gradient-brand {
   background-image: linear-gradient(135deg, var(--brand), var(--brand-2));
 }
+
+/* Numeric entry cells: right-aligned, evenly spaced digits, no spinners */
+@utility amount-input {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+}
+
