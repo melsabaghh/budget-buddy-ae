@@ -246,11 +246,11 @@ function TransactionsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[140px]">Name</TableHead>
-                        <TableHead className="w-[200px] min-w-[200px]">Planned (AED)</TableHead>
-                        <TableHead className="w-[200px] min-w-[200px]">Actual (AED)</TableHead>
-                        <TableHead className="w-[110px] min-w-[110px] text-center">Same as planned</TableHead>
-                        <TableHead className="w-[140px] min-w-[140px] text-right">Diff</TableHead>
+                        <TableHead className="min-w-[128px] px-3">Name</TableHead>
+                        <TableHead className="w-[126px] px-1.5 text-right">Planned (AED)</TableHead>
+                        <TableHead className="w-[126px] px-1.5 text-right">Actual (AED)</TableHead>
+                        <TableHead className="w-[104px] px-1.5 text-center">Same as planned</TableHead>
+                        <TableHead className="w-[118px] px-3 text-right">Diff</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
