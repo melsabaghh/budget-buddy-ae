@@ -83,12 +83,20 @@ export const saveBudgetData = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // Full-replace sync: delete then insert keeps cloud identical to local state.
-    const del = await Promise.all([
-      supabase.from("transaction_entries").delete().eq("user_id", userId),
+    // Transactions reference categories, so delete them first instead of racing
+    // both deletes and intermittently hitting the foreign-key constraint.
+    const txDelete = await supabase
+      .from("transaction_entries")
+      .delete()
+      .eq("user_id", userId);
+    if (txDelete.error) throw txDelete.error;
+
+    const [categoryDelete, savingsDelete] = await Promise.all([
       supabase.from("categories").delete().eq("user_id", userId),
       supabase.from("savings_goals").delete().eq("user_id", userId),
     ]);
-    for (const r of del) if (r.error) throw r.error;
+    if (categoryDelete.error) throw categoryDelete.error;
+    if (savingsDelete.error) throw savingsDelete.error;
 
     if (data.categories.length) {
       const { data: inserted, error } = await supabase
@@ -114,6 +122,7 @@ export const saveBudgetData = createServerFn({ method: "POST" })
       );
 
       if (data.transactions.length) {
+        const missingCategoryIds = new Set<string>();
         const rows = data.transactions
           .map((t) => ({
             user_id: userId,
@@ -123,7 +132,16 @@ export const saveBudgetData = createServerFn({ method: "POST" })
             planned: t.planned,
             actual: t.actual,
           }))
-          .filter((r) => r.category_id);
+          .filter((r) => {
+            if (r.category_id) return true;
+            missingCategoryIds.add(r.client_id);
+            return false;
+          });
+        if (missingCategoryIds.size > 0) {
+          throw new Error(
+            `Could not save transactions for ${missingCategoryIds.size} missing categories`,
+          );
+        }
         if (rows.length) {
           const { error: txErr } = await supabase
             .from("transaction_entries")

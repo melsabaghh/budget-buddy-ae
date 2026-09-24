@@ -82,9 +82,12 @@ function scoped(key: string) {
 // ---------- cloud sync ----------
 
 const MIGRATED_FLAG = (uid: string) => `budget.cloud-migrated.v1::${uid}`;
+const DIRTY_FLAG = (uid: string) => `budget.cloud-dirty.v1::${uid}`;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pushing = false;
+let pushPending = false;
 let pullInFlight: Promise<void> | null = null;
+let localRevision = 0;
 
 function localSnapshot() {
   return {
@@ -97,9 +100,14 @@ function localSnapshot() {
 async function hydrateFromCloud(userId: string) {
   if (pullInFlight) return pullInFlight;
   pullInFlight = (async () => {
+    const revisionAtStart = localRevision;
     try {
       const cloud = await loadBudgetData();
+      if (currentUserId !== userId) return;
       const local = localSnapshot();
+      const hasUnsavedLocalChanges =
+        window.localStorage.getItem(DIRTY_FLAG(userId)) === "1" ||
+        localRevision !== revisionAtStart;
       const cloudEmpty =
         cloud.categories.length === 0 &&
         cloud.transactions.length === 0 &&
@@ -109,13 +117,18 @@ async function hydrateFromCloud(userId: string) {
         local.transactions.length > 0 ||
         local.savings.length > 0;
 
-      if (cloudEmpty && localHasData) {
-        // First sync from this device: push existing local data up.
+      if (hasUnsavedLocalChanges || (cloudEmpty && localHasData)) {
+        // Local changes take priority until they have safely reached the account.
         await saveBudgetData({ data: local });
+        if (currentUserId === userId && localRevision === revisionAtStart) {
+          window.localStorage.removeItem(DIRTY_FLAG(userId));
+        } else {
+          schedulePushToCloud();
+        }
       } else if (!cloudEmpty) {
-        write(BASE_KEYS.categories, cloud.categories as Category[]);
-        write(BASE_KEYS.transactions, cloud.transactions as TransactionEntry[]);
-        write(BASE_KEYS.savings, cloud.savings as SavingsGoal[]);
+        write(BASE_KEYS.categories, cloud.categories as Category[], false);
+        write(BASE_KEYS.transactions, cloud.transactions as TransactionEntry[], false);
+        write(BASE_KEYS.savings, cloud.savings as SavingsGoal[], false);
       }
       window.localStorage.setItem(MIGRATED_FLAG(userId), "1");
     } catch (err) {
@@ -129,18 +142,37 @@ async function hydrateFromCloud(userId: string) {
 
 function schedulePushToCloud() {
   if (!currentUserId || typeof window === "undefined") return;
+  pushPending = true;
   if (pushTimer) clearTimeout(pushTimer);
-  pushTimer = setTimeout(async () => {
-    if (pushing || !currentUserId) return;
-    pushing = true;
-    try {
+  pushTimer = setTimeout(() => void flushPushQueue(), 800);
+}
+
+async function flushPushQueue() {
+  if (pushing || !currentUserId || typeof window === "undefined") return;
+  pushTimer = null;
+  pushing = true;
+  try {
+    while (pushPending && currentUserId) {
+      pushPending = false;
+      const userId = currentUserId;
+      const revision = localRevision;
       await saveBudgetData({ data: localSnapshot() });
-    } catch (err) {
-      console.error("[budget] cloud save failed", err);
-    } finally {
-      pushing = false;
+      if (currentUserId === userId && localRevision === revision) {
+        window.localStorage.removeItem(DIRTY_FLAG(userId));
+      } else if (currentUserId === userId) {
+        pushPending = true;
+      }
     }
-  }, 800);
+  } catch (err) {
+    pushPending = true;
+    console.error("[budget] cloud save failed", err);
+  } finally {
+    pushing = false;
+    if (pushPending && currentUserId) {
+      if (pushTimer) clearTimeout(pushTimer);
+      pushTimer = setTimeout(() => void flushPushQueue(), 2000);
+    }
+  }
 }
 
 // ---------- device backups (restore data saved on this device) ----------
@@ -224,11 +256,15 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-function write<T>(key: string, value: T) {
+function write<T>(key: string, value: T, sync = true) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(scoped(key), JSON.stringify(value));
   window.dispatchEvent(new CustomEvent("budget:update", { detail: key }));
-  schedulePushToCloud();
+  if (sync && currentUserId) {
+    localRevision += 1;
+    window.localStorage.setItem(DIRTY_FLAG(currentUserId), "1");
+    schedulePushToCloud();
+  }
 }
 
 function useStored<T>(key: string, fallback: T) {
