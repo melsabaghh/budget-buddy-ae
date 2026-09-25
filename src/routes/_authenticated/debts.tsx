@@ -242,6 +242,81 @@ function DebtsPage() {
   );
 }
 
+function EndingSoon({ debts, now }: { debts: DebtStats[]; now: string }) {
+  const soon = debts
+    .filter(
+      (d) =>
+        !isComplete(d) &&
+        d.monthsRemaining !== null &&
+        d.monthsRemaining >= 1 &&
+        d.monthsRemaining <= 2,
+    )
+    .sort((a, b) => (a.monthsRemaining ?? 0) - (b.monthsRemaining ?? 0));
+
+  if (soon.length === 0) return null;
+
+  return (
+    <Card className="glass-card border-primary/30">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 font-display text-base">
+          <span className="grid h-7 w-7 place-content-center rounded-lg bg-primary/10 text-primary">
+            <CalendarClock className="h-4 w-4" />
+          </span>
+          Ending soon
+          <Badge variant="secondary" className="font-normal">
+            {soon.length}
+          </Badge>
+          <span className="text-xs font-normal text-muted-foreground">
+            paid off within the next 1–2 months
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {soon.map((d) => (
+          <div
+            key={d.cat.id}
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/50 bg-background/60 px-4 py-3"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-sm font-semibold">{d.cat.name}</span>
+                <Badge
+                  className={
+                    d.cat.type === "loan"
+                      ? "bg-expense/15 text-expense hover:bg-expense/15"
+                      : "bg-primary/10 text-primary hover:bg-primary/10"
+                  }
+                >
+                  {d.cat.type === "loan" ? "Loan" : "Installment"}
+                </Badge>
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                Ends {d.cat.endDate ? monthLabel(d.cat.endDate) : "soon"} ·{" "}
+                {d.monthsRemaining} month{d.monthsRemaining === 1 ? "" : "s"} left
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-semibold text-expense">
+                {d.remainingScheduled !== null ? AED(d.remainingScheduled) : "—"}
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                remaining of {d.totalScheduled !== null ? AED(d.totalScheduled) : "—"}
+              </div>
+            </div>
+          </div>
+        ))}
+        <p className="pt-1 text-xs text-muted-foreground">
+          After these finish, your monthly commitment drops by{" "}
+          <span className="font-semibold text-foreground">
+            {AED(soon.reduce((s, d) => s + d.cat.amount, 0))}
+          </span>
+          .
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DebtGroup({ title, items }: { title: string; items: DebtStats[] }) {
   if (items.length === 0) return null;
   const active = items.filter((d) => !isComplete(d)).length;
