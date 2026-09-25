@@ -221,7 +221,7 @@ function DebtsPage() {
       </div>
 
 
-      <EndingSoon debts={debts} now={now} />
+      <EndingSoon debts={debts} />
 
       {filtered.length === 0 ? (
         <Card className="glass-card">
@@ -242,7 +242,7 @@ function DebtsPage() {
   );
 }
 
-function EndingSoon({ debts, now }: { debts: DebtStats[]; now: string }) {
+function EndingSoon({ debts }: { debts: DebtStats[] }) {
   const soon = debts
     .filter(
       (d) =>
