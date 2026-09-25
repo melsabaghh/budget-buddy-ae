@@ -154,7 +154,7 @@ async function flushPushQueue() {
   try {
     while (pushPending && currentUserId) {
       pushPending = false;
-      const userId = currentUserId;
+      const userId: string = currentUserId;
       const revision = localRevision;
       await saveBudgetData({ data: localSnapshot() });
       if (currentUserId === userId && localRevision === revision) {
