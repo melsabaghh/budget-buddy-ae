@@ -221,6 +221,8 @@ function DebtsPage() {
       </div>
 
 
+      <EndingSoon debts={debts} now={now} />
+
       {filtered.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="py-16 text-center text-sm text-muted-foreground">
