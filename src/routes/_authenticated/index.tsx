@@ -45,6 +45,7 @@ import {
 import {
   ArrowDownRight,
   ArrowUpRight,
+  CreditCard,
   PiggyBank,
   Sparkles,
   TrendingUp,
@@ -259,6 +260,39 @@ function Dashboard() {
         return { c, planned, actual, over: actual - planned };
       });
     return rows.sort((a, b) => b.over - a.over).slice(0, 5);
+  }, [summary.active, txs, month, scope, yearMonths]);
+
+  const dueBySource = useMemo(() => {
+    const map = new Map<
+      string,
+      { planned: number; actual: number; items: number }
+    >();
+    for (const c of summary.active) {
+      if (isIncome(c.type)) continue;
+      const source = c.source?.trim() || "No source set";
+      let planned = 0;
+      let actual = 0;
+      if (scope === "year") {
+        for (const m of yearMonths) {
+          if (!monthInRange(m, c.startDate, c.endDate)) continue;
+          const e = txs.find((t) => t.month === m && t.categoryId === c.id);
+          planned += e?.planned ?? c.amount;
+          actual += e?.actual ?? 0;
+        }
+      } else {
+        const e = txs.find((t) => t.month === month && t.categoryId === c.id);
+        planned = e?.planned ?? c.amount;
+        actual = e?.actual ?? 0;
+      }
+      const bucket = map.get(source) ?? { planned: 0, actual: 0, items: 0 };
+      bucket.planned += planned;
+      bucket.actual += actual;
+      bucket.items += 1;
+      map.set(source, bucket);
+    }
+    return Array.from(map.entries())
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.planned - a.planned);
   }, [summary.active, txs, month, scope, yearMonths]);
 
   const savingsRate =
