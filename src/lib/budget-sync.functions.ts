@@ -11,6 +11,7 @@ const categorySchema = z.object({
   startDate: z.string(),
   endDate: z.string().nullish(),
   notes: z.string().nullish(),
+  source: z.string().nullish(),
 });
 
 const txSchema = z.object({
@@ -58,6 +59,7 @@ export const loadBudgetData = createServerFn({ method: "GET" })
         startDate: c.start_month,
         endDate: c.end_month,
         notes: c.notes ?? undefined,
+        source: c.source ?? undefined,
       })),
       transactions: (txs.data ?? []).map((t: any) => ({
         month: t.month,
@@ -126,6 +128,7 @@ export const saveBudgetData = createServerFn({ method: "POST" })
             start_month: c.startDate,
             end_month: c.endDate ?? null,
             notes: c.notes ?? null,
+            source: c.source ?? null,
           })),
         )
         .select("id, client_id");

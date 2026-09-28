@@ -58,6 +58,7 @@ const emptyDraft: Draft = {
   startDate: currentMonth(),
   endDate: "",
   notes: "",
+  source: "",
   totalAmount: 0,
 };
 
@@ -107,6 +108,7 @@ function CategoriesPage() {
       startDate: draft.startDate,
       endDate: draft.endDate ? draft.endDate : null,
       notes: draft.notes?.trim() || undefined,
+      source: draft.source?.trim() || undefined,
     };
     setCategories((prev) => {
       const i = prev.findIndex((c) => c.id === payload.id);
@@ -269,6 +271,15 @@ function CategoriesPage() {
                   />
                 </Field>
               </div>
+              <Field label="Source / Card (optional)">
+                <Input
+                  value={draft.source ?? ""}
+                  onChange={(e) =>
+                    setDraft({ ...draft, source: e.target.value })
+                  }
+                  placeholder="e.g. ENBD Visa, ADCB account, Cash"
+                />
+              </Field>
               <Field label="Notes (optional)">
                 <Input
                   value={draft.notes ?? ""}
@@ -322,6 +333,7 @@ function CategoriesPage() {
                         <div className="text-xs text-muted-foreground">
                           {monthLabel(c.startDate)}
                           {c.endDate ? ` → ${monthLabel(c.endDate)}` : " · ongoing"}
+                          {c.source ? ` · ${c.source}` : ""}
                           {c.notes ? ` · ${c.notes}` : ""}
                         </div>
                       </div>

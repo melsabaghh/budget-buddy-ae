@@ -38,6 +38,7 @@ export interface Category {
   startDate: string; // YYYY-MM
   endDate?: string | null; // YYYY-MM (inclusive). null/undefined = open-ended
   notes?: string;
+  source?: string; // card / bank account it is paid from, e.g. "ENBD Visa"
 }
 
 export interface TransactionEntry {
