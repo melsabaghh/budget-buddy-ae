@@ -117,7 +117,9 @@ async function hydrateFromCloud(userId: string) {
         local.transactions.length > 0 ||
         local.savings.length > 0;
 
-      if (hasUnsavedLocalChanges || (cloudEmpty && localHasData)) {
+      // Never push an empty local copy over a non-empty cloud one: an empty
+      // local snapshot means "not loaded yet", not "delete everything".
+      if (localHasData && (hasUnsavedLocalChanges || cloudEmpty)) {
         // Local changes take priority until they have safely reached the account.
         await saveBudgetData({ data: local });
         if (currentUserId === userId && localRevision === revisionAtStart) {
