@@ -23,6 +23,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          source: string | null
           start_month: string
           total_amount: number | null
           type: string
@@ -37,6 +38,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          source?: string | null
           start_month: string
           total_amount?: number | null
           type: string
@@ -51,6 +53,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          source?: string | null
           start_month?: string
           total_amount?: number | null
           type?: string
