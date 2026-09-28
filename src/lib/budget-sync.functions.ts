@@ -82,6 +82,20 @@ export const saveBudgetData = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
+    // Safety guard: a completely empty payload must never wipe existing data.
+    // An empty local snapshot means "not loaded yet", not "delete everything".
+    const payloadEmpty =
+      data.categories.length === 0 &&
+      data.transactions.length === 0 &&
+      data.savings.length === 0;
+    if (payloadEmpty) {
+      const { count } = await supabase
+        .from("categories")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if ((count ?? 0) > 0) return { ok: true, skipped: true };
+    }
+
     // Full-replace sync: delete then insert keeps cloud identical to local state.
     // Transactions reference categories, so delete them first instead of racing
     // both deletes and intermittently hitting the foreign-key constraint.
