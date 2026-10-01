@@ -706,6 +706,17 @@ function Dashboard() {
                     </div>
                   );
                 })}
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="font-semibold">
+                    Total ({dueBySource.reduce((n, s) => n + s.items, 0)} items)
+                  </span>
+                  <span className="font-mono text-xs font-semibold">
+                    {AED(dueBySource.reduce((n, s) => n + s.actual, 0))}{" "}
+                    <span className="font-normal text-muted-foreground">
+                      / {AED(dueBySource.reduce((n, s) => n + s.planned, 0))}
+                    </span>
+                  </span>
+                </div>
               </div>
             )}
           </CardContent>
