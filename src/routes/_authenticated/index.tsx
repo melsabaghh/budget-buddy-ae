@@ -652,6 +652,67 @@ function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 font-display text-base">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Due by source
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {scope === "year"
+                    ? `How much is due from each card or account across ${year}.`
+                    : "How much is due from each card or account this month."}
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-normal">
+                {dueBySource.length} {dueBySource.length === 1 ? "source" : "sources"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {dueBySource.length === 0 ? (
+              <EmptyBlock text="No due amounts yet. Set a Source / Card on your categories to group them here." />
+            ) : (
+              <div className="space-y-3">
+                {dueBySource.map((s) => {
+                  const pct =
+                    s.planned > 0
+                      ? Math.min(100, (s.actual / s.planned) * 100)
+                      : 0;
+                  return (
+                    <div key={s.source} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {s.source}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {s.items} {s.items === 1 ? "item" : "items"}
+                          </div>
+                        </div>
+                        <div className="font-mono text-xs font-semibold">
+                          {AED(s.actual)}{" "}
+                          <span className="font-normal text-muted-foreground">
+                            / {AED(s.planned)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)]"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
             <CardTitle className="font-display text-base">
               Top over-budget
             </CardTitle>
