@@ -323,13 +323,24 @@ function CategoriesPage() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {items.map((c) => (
+                  {items.map((c) => {
+                    const ended = !!c.endDate && c.endDate < currentMonth();
+                    return (
                     <div
                       key={c.id}
-                      className="flex items-center justify-between gap-3 py-3"
+                      className={`flex items-center justify-between gap-3 py-3 ${ended ? "opacity-60" : ""}`}
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{c.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`truncate text-sm font-medium ${ended ? "line-through" : ""}`}>
+                            {c.name}
+                          </span>
+                          {ended && (
+                            <Badge variant="outline" className="shrink-0 text-[10px] font-normal">
+                              Inactive
+                            </Badge>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {monthLabel(c.startDate)}
                           {c.endDate ? ` → ${monthLabel(c.endDate)}` : " · ongoing"}
@@ -338,7 +349,7 @@ function CategoriesPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="text-sm font-semibold">{AED(c.amount)}</div>
+                        <div className={`text-sm font-semibold ${ended ? "line-through" : ""}`}>{AED(c.amount)}</div>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -357,7 +368,8 @@ function CategoriesPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
