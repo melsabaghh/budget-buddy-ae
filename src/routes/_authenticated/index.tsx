@@ -329,6 +329,38 @@ function Dashboard() {
       .sort((a, b) => b.total - a.total);
   }, [categories, txs]);
 
+  // Remaining balance per source for installment plans & loans:
+  // total scheduled (term × monthly) minus everything actually paid so far.
+  const remainingBySource = useMemo(() => {
+    const map = new Map<
+      string,
+      { remaining: number; total: number; paid: number; items: number }
+    >();
+    for (const c of categories) {
+      if (c.type !== "installment" && c.type !== "loan") continue;
+      if (!c.endDate || c.amount <= 0) continue;
+      const source = c.source?.trim() || "No source set";
+      const termMonths =
+        (Number(c.endDate.slice(0, 4)) - Number(c.startDate.slice(0, 4))) * 12 +
+        (Number(c.endDate.slice(5, 7)) - Number(c.startDate.slice(5, 7))) +
+        1;
+      const totalScheduled = termMonths * c.amount;
+      const paid = txs
+        .filter((t) => t.categoryId === c.id)
+        .reduce((s, t) => s + (t.actual || 0), 0);
+      const remaining = Math.max(0, totalScheduled - paid);
+      const bucket = map.get(source) ?? { remaining: 0, total: 0, paid: 0, items: 0 };
+      bucket.remaining += remaining;
+      bucket.total += totalScheduled;
+      bucket.paid += paid;
+      bucket.items += 1;
+      map.set(source, bucket);
+    }
+    return Array.from(map.entries())
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.remaining - a.remaining);
+  }, [categories, txs]);
+
   const savingsRate =
     summary.actualIncome > 0
       ? Math.max(0, (summary.actualNet / summary.actualIncome) * 100)
