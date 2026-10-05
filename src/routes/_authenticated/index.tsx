@@ -852,6 +852,71 @@ function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 font-display text-base">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Remaining by source
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Total left to pay on installment plans and loans per card or
+                  account.
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-normal">
+                {remainingBySource.reduce((n, s) => n + s.items, 0)}{" "}
+                {remainingBySource.reduce((n, s) => n + s.items, 0) === 1
+                  ? "debt"
+                  : "debts"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {remainingBySource.length === 0 ? (
+              <EmptyBlock text="No installment plans or loans with a defined end month yet." />
+            ) : (
+              <div className="space-y-4">
+                {remainingBySource.map((s) => {
+                  const pct =
+                    s.total > 0 ? Math.min(100, (s.paid / s.total) * 100) : 0;
+                  return (
+                    <div key={s.source} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {s.source}
+                        </div>
+                        <div className="font-mono text-xs font-semibold">
+                          {AED(s.remaining)}
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            left
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={pct} className="h-1.5" />
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>
+                          {s.items}{" "}
+                          {s.items === 1 ? "item" : "items"} · paid{" "}
+                          {AED(s.paid)}
+                        </span>
+                        <span>of {AED(s.total)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="font-semibold">Total remaining</span>
+                  <span className="font-mono text-xs font-semibold text-destructive">
+                    {AED(remainingBySource.reduce((n, s) => n + s.remaining, 0))}
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
             <CardTitle className="font-display text-base">
               Top over-budget
             </CardTitle>
