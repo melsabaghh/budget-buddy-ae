@@ -295,6 +295,40 @@ function Dashboard() {
       .sort((a, b) => b.planned - a.planned);
   }, [summary.active, txs, month, scope, yearMonths]);
 
+  // Outstanding per source: unpaid (planned - actual) amounts, month by month,
+  // from each category's start up to the current month (or its end month).
+  const outstandingBySource = useMemo(() => {
+    const now = currentMonth();
+    const map = new Map<
+      string,
+      { total: number; months: { month: string; amount: number }[] }
+    >();
+    for (const c of categories) {
+      if (isIncome(c.type)) continue;
+      const source = c.source?.trim() || "No source set";
+      const last = c.endDate && c.endDate < now ? c.endDate : now;
+      let m = c.startDate;
+      let guard = 0;
+      while (m <= last && guard < 600) {
+        guard += 1;
+        const e = txs.find((t) => t.month === m && t.categoryId === c.id);
+        const planned = e?.planned ?? c.amount;
+        const actual = e?.actual ?? 0;
+        const out = planned - actual;
+        if (out > 0) {
+          const bucket = map.get(source) ?? { total: 0, months: [] };
+          bucket.total += out;
+          bucket.months.push({ month: m, amount: out });
+          map.set(source, bucket);
+        }
+        m = shiftMonth(m, 1);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [categories, txs]);
+
   const savingsRate =
     summary.actualIncome > 0
       ? Math.max(0, (summary.actualNet / summary.actualIncome) * 100)
