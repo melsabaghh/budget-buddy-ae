@@ -329,6 +329,38 @@ function Dashboard() {
       .sort((a, b) => b.total - a.total);
   }, [categories, txs]);
 
+  // Remaining balance per source for installment plans & loans:
+  // total scheduled (term × monthly) minus everything actually paid so far.
+  const remainingBySource = useMemo(() => {
+    const map = new Map<
+      string,
+      { remaining: number; total: number; paid: number; items: number }
+    >();
+    for (const c of categories) {
+      if (c.type !== "installment" && c.type !== "loan") continue;
+      if (!c.endDate || c.amount <= 0) continue;
+      const source = c.source?.trim() || "No source set";
+      const termMonths =
+        (Number(c.endDate.slice(0, 4)) - Number(c.startDate.slice(0, 4))) * 12 +
+        (Number(c.endDate.slice(5, 7)) - Number(c.startDate.slice(5, 7))) +
+        1;
+      const totalScheduled = termMonths * c.amount;
+      const paid = txs
+        .filter((t) => t.categoryId === c.id)
+        .reduce((s, t) => s + (t.actual || 0), 0);
+      const remaining = Math.max(0, totalScheduled - paid);
+      const bucket = map.get(source) ?? { remaining: 0, total: 0, paid: 0, items: 0 };
+      bucket.remaining += remaining;
+      bucket.total += totalScheduled;
+      bucket.paid += paid;
+      bucket.items += 1;
+      map.set(source, bucket);
+    }
+    return Array.from(map.entries())
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.remaining - a.remaining);
+  }, [categories, txs]);
+
   const savingsRate =
     summary.actualIncome > 0
       ? Math.max(0, (summary.actualNet / summary.actualIncome) * 100)
@@ -811,6 +843,71 @@ function Dashboard() {
                   </span>
                   <span className="font-mono text-xs font-semibold text-destructive">
                     {AED(outstandingBySource.reduce((n, s) => n + s.total, 0))}
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 font-display text-base">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  Remaining by source
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Total left to pay on installment plans and loans per card or
+                  account.
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-normal">
+                {remainingBySource.reduce((n, s) => n + s.items, 0)}{" "}
+                {remainingBySource.reduce((n, s) => n + s.items, 0) === 1
+                  ? "debt"
+                  : "debts"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {remainingBySource.length === 0 ? (
+              <EmptyBlock text="No installment plans or loans with a defined end month yet." />
+            ) : (
+              <div className="space-y-4">
+                {remainingBySource.map((s) => {
+                  const pct =
+                    s.total > 0 ? Math.min(100, (s.paid / s.total) * 100) : 0;
+                  return (
+                    <div key={s.source} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {s.source}
+                        </div>
+                        <div className="font-mono text-xs font-semibold">
+                          {AED(s.remaining)}
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            left
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={pct} className="h-1.5" />
+                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                        <span>
+                          {s.items}{" "}
+                          {s.items === 1 ? "item" : "items"} · paid{" "}
+                          {AED(s.paid)}
+                        </span>
+                        <span>of {AED(s.total)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="font-semibold">Total remaining</span>
+                  <span className="font-mono text-xs font-semibold text-destructive">
+                    {AED(remainingBySource.reduce((n, s) => n + s.remaining, 0))}
                   </span>
                 </div>
               </div>
