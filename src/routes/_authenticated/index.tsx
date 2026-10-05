@@ -758,6 +758,68 @@ function Dashboard() {
 
         <Card className="glass-card">
           <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 font-display text-base">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  Outstanding by source
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Unpaid amounts (planned minus paid) per card or account, month
+                  by month up to {monthLabel(currentMonth())}.
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-normal">
+                {outstandingBySource.length}{" "}
+                {outstandingBySource.length === 1 ? "source" : "sources"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {outstandingBySource.length === 0 ? (
+              <EmptyBlock text="Nothing outstanding — everything due up to this month is fully paid." />
+            ) : (
+              <div className="space-y-4">
+                {outstandingBySource.map((s) => (
+                  <div key={s.source} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {s.source}
+                      </div>
+                      <div className="font-mono text-xs font-semibold text-destructive">
+                        {AED(s.total)}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {s.months.map((m) => (
+                        <span
+                          key={m.month}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {monthLabel(m.month)}
+                          <span className="font-mono font-semibold text-foreground">
+                            {AED(m.amount)}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="font-semibold">
+                    Total outstanding till {monthLabel(currentMonth())}
+                  </span>
+                  <span className="font-mono text-xs font-semibold text-destructive">
+                    {AED(outstandingBySource.reduce((n, s) => n + s.total, 0))}
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
             <CardTitle className="font-display text-base">
               Top over-budget
             </CardTitle>
