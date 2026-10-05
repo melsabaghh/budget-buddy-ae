@@ -295,6 +295,40 @@ function Dashboard() {
       .sort((a, b) => b.planned - a.planned);
   }, [summary.active, txs, month, scope, yearMonths]);
 
+  // Outstanding per source: unpaid (planned - actual) amounts, month by month,
+  // from each category's start up to the current month (or its end month).
+  const outstandingBySource = useMemo(() => {
+    const now = currentMonth();
+    const map = new Map<
+      string,
+      { total: number; months: { month: string; amount: number }[] }
+    >();
+    for (const c of categories) {
+      if (isIncome(c.type)) continue;
+      const source = c.source?.trim() || "No source set";
+      const last = c.endDate && c.endDate < now ? c.endDate : now;
+      let m = c.startDate;
+      let guard = 0;
+      while (m <= last && guard < 600) {
+        guard += 1;
+        const e = txs.find((t) => t.month === m && t.categoryId === c.id);
+        const planned = e?.planned ?? c.amount;
+        const actual = e?.actual ?? 0;
+        const out = planned - actual;
+        if (out > 0) {
+          const bucket = map.get(source) ?? { total: 0, months: [] };
+          bucket.total += out;
+          bucket.months.push({ month: m, amount: out });
+          map.set(source, bucket);
+        }
+        m = shiftMonth(m, 1);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([source, v]) => ({ source, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [categories, txs]);
+
   const savingsRate =
     summary.actualIncome > 0
       ? Math.max(0, (summary.actualNet / summary.actualIncome) * 100)
@@ -715,6 +749,68 @@ function Dashboard() {
                     <span className="font-normal text-muted-foreground">
                       / {AED(dueBySource.reduce((n, s) => n + s.planned, 0))}
                     </span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 font-display text-base">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  Outstanding by source
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Unpaid amounts (planned minus paid) per card or account, month
+                  by month up to {monthLabel(currentMonth())}.
+                </p>
+              </div>
+              <Badge variant="secondary" className="font-normal">
+                {outstandingBySource.length}{" "}
+                {outstandingBySource.length === 1 ? "source" : "sources"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {outstandingBySource.length === 0 ? (
+              <EmptyBlock text="Nothing outstanding — everything due up to this month is fully paid." />
+            ) : (
+              <div className="space-y-4">
+                {outstandingBySource.map((s) => (
+                  <div key={s.source} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {s.source}
+                      </div>
+                      <div className="font-mono text-xs font-semibold text-destructive">
+                        {AED(s.total)}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {s.months.map((m) => (
+                        <span
+                          key={m.month}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {monthLabel(m.month)}
+                          <span className="font-mono font-semibold text-foreground">
+                            {AED(m.amount)}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between border-t pt-3 text-sm">
+                  <span className="font-semibold">
+                    Total outstanding till {monthLabel(currentMonth())}
+                  </span>
+                  <span className="font-mono text-xs font-semibold text-destructive">
+                    {AED(outstandingBySource.reduce((n, s) => n + s.total, 0))}
                   </span>
                 </div>
               </div>
