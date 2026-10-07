@@ -329,6 +329,16 @@ function Dashboard() {
       .sort((a, b) => b.total - a.total);
   }, [categories, txs]);
 
+  // Combined outstanding for ALL sources, summarized by month.
+  const outstandingByMonth = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of outstandingBySource)
+      for (const m of s.months) map.set(m.month, (map.get(m.month) ?? 0) + m.amount);
+    return Array.from(map.entries())
+      .map(([month, amount]) => ({ month, amount }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  }, [outstandingBySource]);
+
   // Remaining balance per source for installment plans & loans:
   // total scheduled (term × monthly) minus everything actually paid so far.
   const remainingBySource = useMemo(() => {
@@ -837,6 +847,24 @@ function Dashboard() {
                     </div>
                   </div>
                 ))}
+                <div className="space-y-1.5 border-t pt-3">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    All sources combined — by month
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {outstandingByMonth.map((m) => (
+                      <span
+                        key={m.month}
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] text-muted-foreground"
+                      >
+                        {monthLabel(m.month)}
+                        <span className="font-mono font-semibold text-destructive">
+                          {AED(m.amount)}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex items-center justify-between border-t pt-3 text-sm">
                   <span className="font-semibold">
                     Total outstanding till {monthLabel(currentMonth())}
