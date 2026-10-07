@@ -329,6 +329,16 @@ function Dashboard() {
       .sort((a, b) => b.total - a.total);
   }, [categories, txs]);
 
+  // Combined outstanding for ALL sources, summarized by month.
+  const outstandingByMonth = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of outstandingBySource)
+      for (const m of s.months) map.set(m.month, (map.get(m.month) ?? 0) + m.amount);
+    return Array.from(map.entries())
+      .map(([month, amount]) => ({ month, amount }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  }, [outstandingBySource]);
+
   // Remaining balance per source for installment plans & loans:
   // total scheduled (term × monthly) minus everything actually paid so far.
   const remainingBySource = useMemo(() => {
