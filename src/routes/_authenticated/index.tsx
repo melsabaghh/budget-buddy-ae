@@ -38,6 +38,7 @@ import {
   useCategories,
   useSavings,
   useTransactions,
+  upsertEntry,
   type Category,
   type CategoryType,
   type TransactionEntry,
@@ -46,6 +47,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   CreditCard,
+  Check,
   PiggyBank,
   Sparkles,
   TrendingUp,
@@ -127,7 +129,7 @@ type Scope = "month" | "year";
 
 function Dashboard() {
   const [categories] = useCategories();
-  const [txs] = useTransactions();
+  const [txs, setTxs] = useTransactions();
   const [savings] = useSavings();
   const month = currentMonth();
   const [scope, setScope] = useState<Scope>("month");
