@@ -183,7 +183,8 @@ async function flushPushQueue() {
     }
   } finally {
     pushing = false;
-    if (currentUserId && savedRevision < localRevision && !pushTimer) {
+    if (currentUserId && savedRevision < localRevision) {
+      if (pushTimer) clearTimeout(pushTimer);
       pushTimer = setTimeout(() => void flushPushQueue(), 2000);
     }
   }
