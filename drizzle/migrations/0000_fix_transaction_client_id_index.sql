@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.transaction_entries_user_client_id_idx;
