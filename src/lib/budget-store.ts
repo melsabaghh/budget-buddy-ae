@@ -86,9 +86,12 @@ const MIGRATED_FLAG = (uid: string) => `budget.cloud-migrated.v1::${uid}`;
 const DIRTY_FLAG = (uid: string) => `budget.cloud-dirty.v1::${uid}`;
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pushing = false;
-let pushPending = false;
 let pullInFlight: Promise<void> | null = null;
+// Monotonic counter bumped on every local write. A save is only "done" when
+// the revision it snapshotted is still the latest — edits made while a save
+// is in flight always trigger another save.
 let localRevision = 0;
+let savedRevision = 0;
 
 function localSnapshot() {
   return {
@@ -124,14 +127,20 @@ async function hydrateFromCloud(userId: string) {
         // Local changes take priority until they have safely reached the account.
         await saveBudgetData({ data: local });
         if (currentUserId === userId && localRevision === revisionAtStart) {
+          savedRevision = localRevision;
           window.localStorage.removeItem(DIRTY_FLAG(userId));
         } else {
           schedulePushToCloud();
         }
-      } else if (!cloudEmpty) {
+      } else if (!cloudEmpty && !hasUnsavedLocalChanges) {
+        // Only overwrite local state when nothing was typed while downloading.
         write(BASE_KEYS.categories, cloud.categories as Category[], false);
         write(BASE_KEYS.transactions, cloud.transactions as TransactionEntry[], false);
         write(BASE_KEYS.savings, cloud.savings as SavingsGoal[], false);
+        savedRevision = localRevision;
+      } else if (!cloudEmpty) {
+        // Local edits happened during the download: keep them, push them up.
+        schedulePushToCloud();
       }
       window.localStorage.setItem(MIGRATED_FLAG(userId), "1");
     } catch (err) {
@@ -145,7 +154,6 @@ async function hydrateFromCloud(userId: string) {
 
 function schedulePushToCloud() {
   if (!currentUserId || typeof window === "undefined") return;
-  pushPending = true;
   if (pushTimer) clearTimeout(pushTimer);
   pushTimer = setTimeout(() => void flushPushQueue(), 800);
 }
@@ -155,24 +163,27 @@ async function flushPushQueue() {
   pushTimer = null;
   pushing = true;
   try {
-    while (pushPending && currentUserId) {
-      pushPending = false;
+    // Loop until the saved revision catches up with the latest local edit.
+    while (currentUserId && savedRevision < localRevision) {
       const userId: string = currentUserId;
       const revision = localRevision;
-      await saveBudgetData({ data: localSnapshot() });
-      if (currentUserId === userId && localRevision === revision) {
+      const snapshot = localSnapshot();
+      await saveBudgetData({ data: snapshot });
+      if (currentUserId !== userId) return;
+      savedRevision = Math.max(savedRevision, revision);
+      if (savedRevision >= localRevision) {
         window.localStorage.removeItem(DIRTY_FLAG(userId));
-      } else if (currentUserId === userId) {
-        pushPending = true;
       }
     }
   } catch (err) {
-    pushPending = true;
     console.error("[budget] cloud save failed", err);
+    // Retry shortly; the dirty flag stays set so the next sign-in re-pushes.
+    if (currentUserId) {
+      pushTimer = setTimeout(() => void flushPushQueue(), 5000);
+    }
   } finally {
     pushing = false;
-    if (pushPending && currentUserId) {
-      if (pushTimer) clearTimeout(pushTimer);
+    if (currentUserId && savedRevision < localRevision && !pushTimer) {
       pushTimer = setTimeout(() => void flushPushQueue(), 2000);
     }
   }
