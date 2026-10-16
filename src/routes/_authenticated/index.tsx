@@ -834,15 +834,45 @@ function Dashboard() {
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {s.months.map((m) => (
-                        <span
+                        <button
+                          type="button"
                           key={m.month}
-                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                          title="Mark this month as paid"
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                `Record ${AED(m.amount)} as paid for ${s.source} — ${monthLabel(m.month)}?`,
+                              )
+                            )
+                              return;
+                            setTxs((prev) => {
+                              let next = prev;
+                              for (const c of categories) {
+                                if (isIncome(c.type)) continue;
+                                if ((c.source?.trim() || "No source set") !== s.source) continue;
+                                if (!monthInRange(m.month, c.startDate, c.endDate)) continue;
+                                const e = next.find(
+                                  (t) => t.month === m.month && t.categoryId === c.id,
+                                );
+                                const planned = e?.planned ?? c.amount;
+                                next = upsertEntry(next, {
+                                  month: m.month,
+                                  categoryId: c.id,
+                                  planned,
+                                  actual: Math.max(e?.actual ?? 0, planned),
+                                });
+                              }
+                              return next;
+                            });
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-0.5 text-[11px] text-muted-foreground transition hover:border-primary hover:bg-primary/10"
                         >
                           {monthLabel(m.month)}
                           <span className="font-mono font-semibold text-foreground">
                             {AED(m.amount)}
                           </span>
-                        </span>
+                          <Check className="h-3 w-3" />
+                        </button>
                       ))}
                     </div>
                   </div>
