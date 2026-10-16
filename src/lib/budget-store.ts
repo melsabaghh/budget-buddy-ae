@@ -123,8 +123,7 @@ async function hydrateFromCloud(userId: string) {
 
       // Never push an empty local copy over a non-empty cloud one: an empty
       // local snapshot means "not loaded yet", not "delete everything".
-      if (localHasData && (hasUnsavedLocalChanges || cloudEmpty)) {
-        // Local changes take priority until they have safely reached the account.
+      if (localHasData && cloudEmpty) {
         await saveBudgetData({ data: local });
         if (currentUserId === userId && localRevision === revisionAtStart) {
           savedRevision = localRevision;
@@ -132,15 +131,36 @@ async function hydrateFromCloud(userId: string) {
         } else {
           schedulePushToCloud();
         }
+      } else if (localHasData && hasUnsavedLocalChanges && !cloudEmpty) {
+        // This device has unsaved edits AND the account has data from another
+        // device: merge both (this device wins on conflicts) instead of
+        // overwriting the other device's entries.
+        const fresh = localSnapshot();
+        const merged = {
+          categories: mergeBy(
+            cloud.categories as Category[],
+            fresh.categories,
+            (c) => c.id,
+          ),
+          transactions: mergeBy(
+            cloud.transactions as TransactionEntry[],
+            fresh.transactions,
+            (t) => txKey(t.month, t.categoryId),
+          ),
+          savings: mergeBy(cloud.savings as SavingsGoal[], fresh.savings, (g) => g.id),
+        };
+        write(BASE_KEYS.categories, merged.categories, false);
+        write(BASE_KEYS.transactions, merged.transactions, false);
+        write(BASE_KEYS.savings, merged.savings, false);
+        localRevision += 1;
+        window.localStorage.setItem(DIRTY_FLAG(userId), "1");
+        schedulePushToCloud();
       } else if (!cloudEmpty && !hasUnsavedLocalChanges) {
-        // Only overwrite local state when nothing was typed while downloading.
+        // Nothing pending on this device: the account copy is the truth.
         write(BASE_KEYS.categories, cloud.categories as Category[], false);
         write(BASE_KEYS.transactions, cloud.transactions as TransactionEntry[], false);
         write(BASE_KEYS.savings, cloud.savings as SavingsGoal[], false);
         savedRevision = localRevision;
-      } else if (!cloudEmpty) {
-        // Local edits happened during the download: keep them, push them up.
-        schedulePushToCloud();
       }
       window.localStorage.setItem(MIGRATED_FLAG(userId), "1");
     } catch (err) {
@@ -150,6 +170,29 @@ async function hydrateFromCloud(userId: string) {
     }
   })();
   return pullInFlight;
+}
+
+function mergeBy<T>(base: T[], override: T[], key: (x: T) => string): T[] {
+  const map = new Map<string, T>();
+  for (const x of base) map.set(key(x), x);
+  for (const x of override) map.set(key(x), x);
+  return Array.from(map.values());
+}
+
+// Pull the latest account copy whenever the app comes back into view, so an
+// edit made on the phone shows up on the web (and vice versa) without a
+// manual refresh. Skipped while this device still has edits to upload.
+if (typeof window !== "undefined") {
+  const refreshFromCloud = () => {
+    if (document.visibilityState !== "visible") return;
+    const userId = currentUserId;
+    if (!userId || pushing || pushTimer || savedRevision < localRevision) return;
+    if (window.localStorage.getItem(DIRTY_FLAG(userId)) === "1") return;
+    void hydrateFromCloud(userId);
+  };
+  document.addEventListener("visibilitychange", refreshFromCloud);
+  window.addEventListener("focus", refreshFromCloud);
+  setInterval(refreshFromCloud, 30000);
 }
 
 function schedulePushToCloud() {
