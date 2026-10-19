@@ -159,10 +159,15 @@ export const saveBudgetData = createServerFn({ method: "POST" })
             `Could not save transactions for ${missingCategoryIds.size} missing categories`,
           );
         }
-        if (rows.length) {
+        // One row per month + category (the latest wins) so duplicates on a
+        // device can never make the whole save fail.
+        const unique = Array.from(
+          new Map(rows.map((r) => [`${r.month}|${r.category_id}`, r])).values(),
+        );
+        if (unique.length) {
           const { error: txErr } = await supabase
             .from("transaction_entries")
-            .insert(rows as any);
+            .insert(unique as any);
           if (txErr) throw txErr;
         }
       }
